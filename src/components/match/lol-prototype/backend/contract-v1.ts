@@ -48,7 +48,7 @@ export type LolSimV1RuntimeState = Pick<
   MatchState,
   "timeSec" | "running" | "winner" | "showWalls" | "champions" | "minions" | "structures" | "objectives" | "neutralTimers" | "stats" | "events"
 > & {
-  speed: number;
+  speed?: number;
   goldDiffTimeline?: Array<{ minute: number; diff: number }>;
 };
 

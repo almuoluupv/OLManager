@@ -57,30 +57,19 @@ export default function PlayerProfileHeroCard({
   rerollingRole = false,
   insigniaChampionId = null,
   onSelectTeam,
-  onStartPotentialResearch,
-  potentialResearchSubmitting = false,
-  isPotentialResearchBlockedByOther = false,
+  onStartPotentialResearch: _onStartPotentialResearch,
+  potentialResearchSubmitting: _potentialResearchSubmitting = false,
+  isPotentialResearchBlockedByOther: _isPotentialResearchBlockedByOther = false,
   academyActionLabel = null,
   academyActionLoading = false,
   onAcademyAction = null,
   t,
 }: PlayerProfileHeroCardProps) {
   const role = primaryRole;
-  const roleVariant = getLolRoleBadgeVariant(role);
   const playerPhoto = resolvePlayerPhoto(player.id, player.match_name, player.profile_image_url);
   const [insigniaBackground, setInsigniaBackground] = useState<string | null>(null);
   const [editingRole, setEditingRole] = useState(false);
   const potentialRevealed = player.potential_revealed ?? null;
-  const potentialEta = player.potential_research_eta_days ?? null;
-  const potentialActive = potentialEta !== null && potentialEta > 0;
-  const potentialProgress = potentialActive ? 7 - potentialEta : 0;
-  const canStartPotentialResearch =
-    isOwnClub &&
-    !potentialActive &&
-    potentialRevealed === null &&
-    !isPotentialResearchBlockedByOther &&
-    Boolean(onStartPotentialResearch) &&
-    !potentialResearchSubmitting;
   const potentialValueLabel =
     potentialRevealed !== null ? String(potentialRevealed) : "??";
 
@@ -451,15 +440,5 @@ function MobileQuickStat({
       <p className={`font-heading font-bold text-lg mt-0.5 ${color}`}>{value}</p>
     </div>
   );
-}
-function getLolRoleBadgeVariant(role: string) {
-  const roleVariants: Record<string, string> = {
-    TOP: "top",
-    JUNGLE: "jungle",
-    MID: "mid",
-    ADC: "adc",
-    SUPPORT: "support",
-  };
-  return roleVariants[role] || "top";
 }
 

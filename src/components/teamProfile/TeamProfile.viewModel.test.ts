@@ -40,8 +40,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2000-01-01",
     nationality: "BR",
-    position: "Forward",
-    natural_position: "Forward",
+    position: "ADC",
+    natural_position: "ADC",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -110,6 +110,7 @@ function createGameState(overrides: Partial<GameStateData> = {}): GameStateData 
       career_stats: {
         matches_managed: 0,
         wins: 0,
+        draws: 0,
         losses: 0,
         trophies: 0,
         best_finish: null,
@@ -118,9 +119,9 @@ function createGameState(overrides: Partial<GameStateData> = {}): GameStateData 
     },
     teams: [createTeam()],
     players: [
-      createPlayer({ id: "goalkeeper", full_name: "Goal Keeper", position: "Goalkeeper", natural_position: "Goalkeeper" }),
-      createPlayer({ id: "forward", full_name: "Front Man", position: "Forward", natural_position: "Forward" }),
-      createPlayer({ id: "midfielder", full_name: "Mid Field", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "goalkeeper", full_name: "Goal Keeper", position: "SUPPORT", natural_position: "SUPPORT" }),
+      createPlayer({ id: "forward", full_name: "Front Man", position: "ADC", natural_position: "ADC" }),
+      createPlayer({ id: "midfielder", full_name: "Mid Field", position: "MID", natural_position: "MID" }),
     ],
     staff: [],
     messages: [],

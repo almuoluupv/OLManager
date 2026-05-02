@@ -277,7 +277,7 @@ function dragonKillIconsBySide(
 
   const fallback = [...parsed];
   while (fallback.length < expectedCount) {
-    fallback.push(defaultIcon);
+    fallback.push("/lol-map-icons/dragon.png");
   }
   return fallback;
 }
@@ -951,7 +951,7 @@ export default function LolMatchLive({ gameState, snapshot, championSelections, 
           red: { kills: 0, towers: 0, dragons: 0, barons: 0, gold: 0 },
         },
         events: stateNow?.events ?? [],
-        speed: stateNow?.speed ?? speed,
+        speed,
       };
 
       await new Promise((resolve) => setTimeout(resolve, 450));

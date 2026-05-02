@@ -246,7 +246,7 @@ function makeEnginePlayer(
   return {
     id: "p1",
     name: "Player One",
-    position: "Goalkeeper",
+    position: "SUPPORT",
     condition: 100,
     pace: 50,
     stamina: 50,

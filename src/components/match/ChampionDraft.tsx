@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MatchSnapshot } from "./types";
 import type { GameStateData } from "../../store/gameStore";
@@ -461,24 +461,6 @@ function mapSnapshotPositionToDraftRole(position: string): Role {
   if (key.includes("attackingmidfielder") || key === "mid") return "MID";
   if (key.includes("adc") || key.includes("bot") || key === "forward" || key === "striker") return "ADC";
   return "SUPPORT";
-}
-
-function roleOrderedSnapshotPlayers<T extends { position: string; id: string }>(players: T[]): T[] {
-  const byRole = new Map<Role, T>();
-  const used = new Set<string>();
-
-  for (const role of ROLE_ORDER) {
-    const player = players.find(
-      (candidate) => !used.has(candidate.id) && mapSnapshotPositionToDraftRole(candidate.position) === role,
-    );
-    if (!player) continue;
-    byRole.set(role, player);
-    used.add(player.id);
-  }
-
-  const remainder = players.filter((candidate) => !used.has(candidate.id));
-  const ordered = ROLE_ORDER.map((role) => byRole.get(role)).filter((value): value is T => !!value);
-  return [...ordered, ...remainder].slice(0, 5);
 }
 
 function roleOrderedSnapshotPlayersWithResolver<T extends { position: string; id: string }>(

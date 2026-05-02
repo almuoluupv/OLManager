@@ -1,7 +1,7 @@
 use crate::game::Game;
 use crate::potential::calculate_lol_ovr;
-use domain::player::Position as DomainPosition;
-use engine::{PlayStyle, PlayerData, Position, TeamData};
+use domain::player::LolRole as DomainLolRole;
+use engine::{LolRole, PlayStyle, PlayerData, TeamData};
 
 // ---------------------------------------------------------------------------
 // Domain → Engine conversion (LoL: 5 titulares + banca)
@@ -77,19 +77,12 @@ pub(super) fn build_team_with_bench(game: &Game, team_id: &str) -> (TeamData, Ve
 }
 
 fn to_engine_player(p: &domain::player::Player) -> PlayerData {
-    let pos = match p.position.to_group_position() {
-        DomainPosition::Goalkeeper => Position::Goalkeeper,
-        DomainPosition::Defender => Position::Defender,
-        DomainPosition::Midfielder => Position::Midfielder,
-        DomainPosition::Forward => Position::Forward,
-        _ => Position::Midfielder,
-    };
+    let role = domain_lol_role_to_engine(&p.natural_position);
 
     PlayerData {
         id: p.id.clone(),
         name: p.match_name.clone(),
-        position: pos,
-        lol_role: Some(map_position_to_lol_role(&p.natural_position).to_string()),
+        role,
         condition: p.condition,
         fitness: p.fitness,
         pace: p.attributes.pace,
@@ -115,34 +108,25 @@ fn to_engine_player(p: &domain::player::Player) -> PlayerData {
     }
 }
 
-fn map_position_to_lol_role(position: &DomainPosition) -> &'static str {
+fn domain_lol_role_to_engine(position: &DomainLolRole) -> LolRole {
     match position {
-        DomainPosition::Defender
-        | DomainPosition::RightBack
-        | DomainPosition::CenterBack
-        | DomainPosition::LeftBack
-        | DomainPosition::RightWingBack
-        | DomainPosition::LeftWingBack => "TOP",
-        DomainPosition::AttackingMidfielder
-        | DomainPosition::RightMidfielder
-        | DomainPosition::LeftMidfielder => "MID",
-        DomainPosition::Forward
-        | DomainPosition::RightWinger
-        | DomainPosition::LeftWinger
-        | DomainPosition::Striker => "ADC",
-        DomainPosition::Goalkeeper | DomainPosition::DefensiveMidfielder => "SUPPORT",
-        DomainPosition::Midfielder | DomainPosition::CentralMidfielder => "JUNGLE",
+        DomainLolRole::Top => LolRole::Top,
+        DomainLolRole::Jungle => LolRole::Jungle,
+        DomainLolRole::Mid => LolRole::Mid,
+        DomainLolRole::Adc => LolRole::Adc,
+        DomainLolRole::Support => LolRole::Support,
+        DomainLolRole::Unknown => LolRole::Mid,
     }
 }
 
-fn lol_role_rank(position: &DomainPosition) -> u8 {
-    match map_position_to_lol_role(position) {
-        "TOP" => 0,
-        "JUNGLE" => 1,
-        "MID" => 2,
-        "ADC" => 3,
-        "SUPPORT" => 4,
-        _ => 5,
+fn lol_role_rank(position: &DomainLolRole) -> u8 {
+    match position {
+        DomainLolRole::Top => 0,
+        DomainLolRole::Jungle => 1,
+        DomainLolRole::Mid => 2,
+        DomainLolRole::Adc => 3,
+        DomainLolRole::Support => 4,
+        DomainLolRole::Unknown => 5,
     }
 }
 
@@ -175,14 +159,14 @@ pub fn auto_select_set_pieces(
     // Penalty taker: highest shooting + composure (exclude GK)
     let penalty = players
         .iter()
-        .filter(|p| p.position != DomainPosition::Goalkeeper)
+        .filter(|p| p.position != DomainLolRole::Support)
         .max_by_key(|p| (p.attributes.shooting as u16) + (p.attributes.composure as u16))
         .map(|p| p.id.clone());
 
-    // Free kick taker: highest passing + vision + shooting (exclude GK)
+    // Free kick taker: highest passing + vision + shooting (exclude Support)
     let free_kick = players
         .iter()
-        .filter(|p| p.position != DomainPosition::Goalkeeper)
+        .filter(|p| p.position != DomainLolRole::Support)
         .max_by_key(|p| {
             (p.attributes.passing as u16)
                 + (p.attributes.vision as u16)
@@ -190,10 +174,10 @@ pub fn auto_select_set_pieces(
         })
         .map(|p| p.id.clone());
 
-    // Corner taker: highest passing + vision (exclude GK, prefer different from FK)
+    // Corner taker: highest passing + vision (exclude Support, prefer different from FK)
     let corner = players
         .iter()
-        .filter(|p| p.position != DomainPosition::Goalkeeper)
+        .filter(|p| p.position != DomainLolRole::Support)
         .max_by_key(|p| {
             let base = (p.attributes.passing as u16) + (p.attributes.vision as u16);
             // Small penalty if same as free kick taker to encourage variety

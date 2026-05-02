@@ -1,6 +1,7 @@
 pub mod academy;
 pub mod club;
 pub mod contracts;
+pub mod frontend_error;
 pub mod game;
 pub mod jobs;
 pub mod live_match;
@@ -19,6 +20,7 @@ pub mod world;
 pub use academy::*;
 pub use club::*;
 pub use contracts::*;
+pub use frontend_error::*;
 pub use game::*;
 pub use jobs::*;
 pub use live_match::*;

@@ -12,7 +12,9 @@ pub fn lol_sim_v2_init(
     state: State<'_, LolSimV2StoreState>,
     request: crate::application::lol_sim_v2::LolSimV2InitRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    init(&state, request)
+    crate::error_reporter::track("lol_sim_v2_init", (|| {
+        init(&state, request)
+    })())
 }
 
 #[tauri::command]
@@ -20,7 +22,9 @@ pub fn lol_sim_v2_tick(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2TickRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    tick(&state, request)
+    crate::error_reporter::track("lol_sim_v2_tick", (|| {
+        tick(&state, request)
+    })())
 }
 
 #[tauri::command]
@@ -28,7 +32,9 @@ pub fn lol_sim_v2_reset(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2ResetRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    reset(&state, request)
+    crate::error_reporter::track("lol_sim_v2_reset", (|| {
+        reset(&state, request)
+    })())
 }
 
 #[tauri::command]
@@ -36,7 +42,9 @@ pub fn lol_sim_v2_dispose(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2DisposeRequest,
 ) -> Result<LolSimV2DisposeResponse, String> {
-    dispose(&state, request)
+    crate::error_reporter::track("lol_sim_v2_dispose", (|| {
+        dispose(&state, request)
+    })())
 }
 
 #[tauri::command]
@@ -44,7 +52,9 @@ pub async fn lol_sim_v2_run_to_completion(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2RunToCompletionRequest,
 ) -> Result<LolSimV2RunToCompletionResponse, String> {
-    run_to_completion(&state, request)
+    crate::error_reporter::track("lol_sim_v2_run_to_completion", (|| {
+        run_to_completion(&state, request)
+    })())
 }
 
 #[tauri::command]
@@ -52,5 +62,7 @@ pub fn lol_sim_v2_skip_to_end(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2SkipToEndRequest,
 ) -> Result<LolSimV2SkipToEndResponse, String> {
-    skip_to_end(&state, request)
+    crate::error_reporter::track("lol_sim_v2_skip_to_end", (|| {
+        skip_to_end(&state, request)
+    })())
 }

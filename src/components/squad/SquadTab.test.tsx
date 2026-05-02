@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { GameStateData, PlayerData, TeamData } from "../../store/gameStore";
+import type { LolRole } from "./SquadTab.helpers";
 import SquadTab from "./SquadTab";
 
 vi.mock("react-i18next", () => ({
@@ -21,7 +22,7 @@ vi.mock("react-i18next", () => ({
 
 const makePlayer = (
   id: string,
-  position: string,
+  position: LolRole,
   overrides: Partial<PlayerData> = {},
 ): PlayerData => ({
   id,
@@ -121,18 +122,18 @@ const makeTeam = (overrides: Partial<TeamData> = {}): TeamData => ({
 
 const makeGameState = (): GameStateData => {
   const players = [
-    makePlayer("gk1", "Goalkeeper"),
-    makePlayer("d1", "Center Back"),
-    makePlayer("d2", "Defender"),
-    makePlayer("d3", "Defender"),
-    makePlayer("d4", "Defender"),
-    makePlayer("m1", "Midfielder"),
-    makePlayer("m2", "Midfielder"),
-    makePlayer("m3", "Midfielder"),
-    makePlayer("m4", "Midfielder"),
-    makePlayer("f1", "Forward"),
-    makePlayer("f2", "Forward"),
-    makePlayer("d5", "Defender", { match_name: "Bench DEF" }),
+    makePlayer("gk1", "SUPPORT"),
+    makePlayer("d1", "TOP"),
+    makePlayer("d2", "TOP"),
+    makePlayer("d3", "TOP"),
+    makePlayer("d4", "TOP"),
+    makePlayer("m1", "MID"),
+    makePlayer("m2", "MID"),
+    makePlayer("m3", "MID"),
+    makePlayer("m4", "MID"),
+    makePlayer("f1", "ADC"),
+    makePlayer("f2", "ADC"),
+    makePlayer("d5", "TOP", { match_name: "Bench DEF" }),
   ];
 
   return {

@@ -39,6 +39,12 @@ fn migrate_manager_avatar_path(tx: &Transaction<'_>) -> HookResult {
     Ok(())
 }
 
+fn migrate_team_arena_columns(tx: &Transaction<'_>) -> HookResult {
+    add_column_if_missing(tx, "teams", "arena_name", "TEXT")?;
+    add_column_if_missing(tx, "teams", "arena_capacity", "INTEGER")?;
+    Ok(())
+}
+
 fn connection_column_exists(
     conn: &Connection,
     table: &str,
@@ -74,11 +80,13 @@ pub fn ensure_compatible_schema(conn: &Connection) -> rusqlite::Result<()> {
     connection_add_column_if_missing(conn, "managers", "avatar_path", "TEXT")?;
     connection_add_column_if_missing(conn, "players", "profile_image_url", "TEXT")?;
     connection_add_column_if_missing(conn, "staff", "profile_image_url", "TEXT")?;
+    connection_add_column_if_missing(conn, "teams", "arena_name", "TEXT")?;
+    connection_add_column_if_missing(conn, "teams", "arena_capacity", "INTEGER")?;
     Ok(())
 }
 
 /// Number of migrations defined. Keep in sync with the vec in `all_migrations`.
-pub const MIGRATION_COUNT: usize = 30;
+pub const MIGRATION_COUNT: usize = 31;
 
 /// All migrations for a per-save game database.
 /// Each save `.db` file gets this schema applied via `rusqlite_migration`.
@@ -144,6 +152,8 @@ pub fn all_migrations() -> Migrations<'static> {
         M::up(include_str!("sql/v028_champion_progression_state.sql")),
         // V30: Optional unified profile image URLs for players and staff
         M::up_with_hook("SELECT 1;", migrate_profile_image_urls),
+        // V31: Add arena_name and arena_capacity to teams table (tolerates existing)
+        M::up_with_hook("SELECT 1;", migrate_team_arena_columns),
     ])
 }
 

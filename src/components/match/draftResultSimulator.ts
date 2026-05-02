@@ -98,13 +98,20 @@ export interface DraftTimelineEvent {
 
 export interface DraftMatchResult {
   winnerSide: Side;
+  winner_side?: Side;
   durationMinutes: number;
+  duration_minutes?: number;
   blueKills: number;
+  blue_kills?: number;
   redKills: number;
+  red_kills?: number;
   mvp: DraftPlayerResult;
   playerResults: DraftPlayerResult[];
+  player_results?: DraftPlayerResult[];
   goldDiffTimeline: Array<{ minute: number; diff: number }>;
+  gold_diff_timeline?: Array<{ minute: number; diff: number }>;
   timelineEvents: DraftTimelineEvent[];
+  timeline_events?: DraftTimelineEvent[];
   objectives: {
     blue: DraftTeamObjectives;
     red: DraftTeamObjectives;

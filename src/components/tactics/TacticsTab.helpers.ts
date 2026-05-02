@@ -1,4 +1,5 @@
 import { calcAge, calcOvr } from "../../lib/helpers";
+import { toLolRole } from "../../lib/lolIdentity";
 import type { PlayerData } from "../../store/gameStore";
 import {
   buildPitchRows,
@@ -8,6 +9,7 @@ import {
   normalisePosition,
   positionCode,
   type SquadSection,
+  type LolRole,
 } from "../squad/SquadTab.helpers";
 
 export const FORMATIONS = [
@@ -50,14 +52,14 @@ interface TacticsPlayerSortContext {
   section: SquadSection;
   sortDir: SortDirection;
   sortKey: SortKey;
-  xiActivePosition: Map<string, string>;
+  xiActivePosition: Map<string, LolRole>;
 }
 
 interface TacticsPlayerFilterContext {
   playerSearch: string;
   positionFilter: string;
   section: SquadSection;
-  xiActivePosition: Map<string, string>;
+  xiActivePosition: Map<string, LolRole>;
 }
 
 interface ResolveStartingXiIdsOptions {
@@ -78,8 +80,8 @@ export function buildTacticsRoster(
       return (
         (POSITION_ORDER[normalisePosition(leftPlayer.position)] ?? 99) -
           (POSITION_ORDER[normalisePosition(rightPlayer.position)] ?? 99) ||
-        calcOvr(rightPlayer, rightPlayer.natural_position || rightPlayer.position) -
-          calcOvr(leftPlayer, leftPlayer.natural_position || leftPlayer.position)
+        calcOvr(rightPlayer, toLolRole(rightPlayer.natural_position || rightPlayer.position || "")) -
+          calcOvr(leftPlayer, toLolRole(leftPlayer.natural_position || leftPlayer.position || ""))
       );
     });
 }
@@ -107,7 +109,7 @@ export function resolveStartingXiIds({
   const fillPlayerIds: string[] = [];
 
   while (validPendingIds.length + fillPlayerIds.length < 11) {
-    const slotPosition = slotPositions[validPendingIds.length + fillPlayerIds.length];
+    const slotPosition = slotPositions[validPendingIds.length + fillPlayerIds.length] as LolRole | undefined;
     const bestPlayer = availablePlayers
       .filter((player) => !usedPlayerIds.has(player.id))
       .sort(
@@ -126,13 +128,13 @@ export function resolveStartingXiIds({
 export function getSectionPlayerPosition(
   player: PlayerData,
   section: SquadSection,
-  xiActivePosition: Map<string, string>,
-): string {
+  xiActivePosition: Map<string, LolRole>,
+): LolRole {
   if (section === "xi") {
-    return xiActivePosition.get(player.id) ?? player.position;
+    return xiActivePosition.get(player.id) ?? toLolRole(player.position || "");
   }
 
-  return player.natural_position || player.position;
+  return toLolRole(player.natural_position || player.position || "");
 }
 
 export function sortTacticsPlayers(

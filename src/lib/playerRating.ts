@@ -1,5 +1,6 @@
 import type { PlayerData } from "../store/gameStore";
 import type { LolRole } from "../store/types";
+import { toLolRole } from "./lolIdentity";
 
 /**
  * Role-based rating weights (per design spec)
@@ -65,6 +66,9 @@ function weightedAverage(values: Array<[number, number]>): number {
 function weightedRoleScore(player: PlayerData, role: LolRole): number {
     const attributes = player.attributes;
     const weights = ROLE_WEIGHTS[role];
+    if (!weights) {
+        return 40;
+    }
 
     return weightedAverage(
         weights.map(([attr, weight]) => [attributes[attr] as number, weight])
@@ -91,6 +95,8 @@ function criticalPenalty(player: PlayerData, role: LolRole): number {
         case "SUPPORT":
             criticalMin = Math.min(attributes.vision, attributes.passing, attributes.positioning);
             break;
+        default:
+            return 0;
     }
 
     return criticalMin >= 45 ? 0 : (45 - criticalMin) * 0.6;
@@ -117,11 +123,18 @@ function roleCompatibilityPenalty(player: PlayerData, targetRole: LolRole): numb
     return 14.0;
 }
 
+const VALID_LOL_ROLES: LolRole[] = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
+
+function toValidRole(role: string): LolRole {
+    if (VALID_LOL_ROLES.includes(role as LolRole)) return role as LolRole;
+    return toLolRole(role);
+}
+
 /**
  * Calculate overall rating for a player at a given role
  */
 export function calcOvr(player: PlayerData, role?: LolRole): number {
-    const targetRole = role || player.natural_position;
+    const targetRole = role || toValidRole(player.natural_position);
     const weightedScore = weightedRoleScore(player, targetRole);
     const penalty = criticalPenalty(player, targetRole);
     const fitPenalty = role ? roleCompatibilityPenalty(player, targetRole) : 0;
@@ -146,7 +159,7 @@ export function positionBadgeVariant(role: LolRole): "accent" | "primary" | "suc
         case "ADC":
             return "accent";
         case "SUPPORT":
-            return "neutral";
+            return "primary";
         default:
             return "primary";
     }

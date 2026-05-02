@@ -87,9 +87,14 @@ function attachLolTacticsToSnapshot(snapshot: MatchSnapshot, gameState: GameStat
   const homeTeam = gameState.teams.find((team) => team.id === snapshot.home_team.id);
   const awayTeam = gameState.teams.find((team) => team.id === snapshot.away_team.id);
 
-  const normalizePosition = (position: string) => position.toLowerCase().replace(/[^a-z]/g, "");
+  const normalizePosition = (position: string) => (position ?? "").toLowerCase().replace(/[^a-z]/g, "");
   const positionToRole = (position: string): DraftRole | null => {
     const normalized = normalizePosition(position);
+    if (normalized === "top") return "TOP";
+    if (normalized === "jungle") return "JUNGLE";
+    if (normalized === "mid") return "MID";
+    if (normalized === "adc") return "ADC";
+    if (normalized === "support") return "SUPPORT";
     if (normalized === "defender") return "TOP";
     if (normalized === "midfielder") return "JUNGLE";
     if (normalized === "attackingmidfielder") return "MID";
@@ -622,16 +627,6 @@ function clearStoredFixtureDraftResult(fixtureId: string) {
 
 function getSeriesSessionKey(fixtureId: string): string {
   return `fixture-draft-session-active:${fixtureId}`;
-}
-
-function hasActiveSeriesSession(fixtureId: string): boolean {
-  if (typeof window === "undefined") return false;
-
-  try {
-    return window.sessionStorage.getItem(getSeriesSessionKey(fixtureId)) === "1";
-  } catch {
-    return false;
-  }
 }
 
 function markActiveSeriesSession(fixtureId: string) {
@@ -1210,7 +1205,7 @@ export default function MatchSimulation() {
     if (activeSnapshot) {
       const roles = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"] as const;
       const inferRole = (position: string): typeof roles[number] => {
-        const p = position.toLowerCase();
+        const p = (position || "").toLowerCase();
         if (p.includes("top")) return "TOP";
         if (p.includes("jung")) return "JUNGLE";
         if (p.includes("mid")) return "MID";

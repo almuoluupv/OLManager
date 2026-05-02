@@ -44,8 +44,8 @@ function player(overrides: Partial<PlayerData>): PlayerData {
     full_name: "Rookie One",
     date_of_birth: "2008-01-01",
     nationality: "GB",
-    position: "Mid",
-    natural_position: "Mid",
+    position: "MID",
+    natural_position: "MID",
     alternate_positions: [],
     training_focus: null,
     attributes: {

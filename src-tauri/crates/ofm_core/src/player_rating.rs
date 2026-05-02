@@ -1,320 +1,150 @@
-use domain::player::{Footedness, Player, Position};
+use domain::player::{LolRole, Player};
 
-pub fn formation_slots(formation: &str) -> Vec<Position> {
-    formation_slot_rows(formation)
-        .into_iter()
-        .flatten()
-        .collect()
-}
-
-fn formation_slot_rows(formation: &str) -> Vec<Vec<Position>> {
-    let parts: Vec<usize> = formation
-        .split('-')
-        .filter_map(|part| part.parse::<usize>().ok())
-        .collect();
-
-    match parts.as_slice() {
-        [defenders, midfielders, forwards] => vec![
-            vec![Position::Goalkeeper],
-            defender_line(*defenders),
-            midfield_line(*midfielders),
-            forward_line(*forwards),
-        ],
-        [defenders, deep_midfielders, attacking_midfielders, forwards] => vec![
-            vec![Position::Goalkeeper],
-            defender_line(*defenders),
-            deep_midfield_line(*deep_midfielders),
-            attacking_midfield_line(*attacking_midfielders),
-            forward_line(*forwards),
-        ],
-        _ => formation_slot_rows("4-4-2"),
-    }
+pub fn formation_slots(_formation: &str) -> Vec<LolRole> {
+    vec![
+        LolRole::Top,
+        LolRole::Jungle,
+        LolRole::Mid,
+        LolRole::Adc,
+        LolRole::Support,
+    ]
 }
 
 pub fn natural_ovr(player: &Player) -> f64 {
-    let natural_position = primary_position(player);
-    ovr_for_position(player, &natural_position)
+    let role = primary_role(player);
+    ovr_for_role(player, &role)
 }
 
-pub fn ovr_for_position(player: &Player, position: &Position) -> f64 {
-    let canonical = canonical_position(position);
-    let base = weighted_score(player, &canonical);
-    let penalty = critical_penalty(player, &canonical);
+pub fn ovr_for_role(player: &Player, role: &LolRole) -> f64 {
+    let base = weighted_score(player, role);
+    let penalty = critical_penalty(player, role);
     (base - penalty).clamp(1.0, 99.0)
 }
 
-pub fn effective_rating_for_assignment(player: &Player, slot_position: &Position) -> f64 {
-    let canonical_slot = canonical_position(slot_position);
-    let base = ovr_for_position(player, &canonical_slot);
-    let compatibility_penalty = compatibility_penalty(player, &canonical_slot);
-    let foot_penalty = footedness_penalty(player, &canonical_slot);
-    let adjusted = (base - compatibility_penalty - foot_penalty).max(1.0);
+pub fn effective_rating_for_assignment(player: &Player, slot_role: &LolRole) -> f64 {
+    let base = ovr_for_role(player, slot_role);
+    let compatibility_penalty = compatibility_penalty(player, slot_role);
+    let adjusted = (base - compatibility_penalty).max(1.0);
     adjusted * (player.condition as f64 / 100.0)
 }
 
-fn defender_line(count: usize) -> Vec<Position> {
-    match count {
-        3 => vec![
-            Position::CenterBack,
-            Position::CenterBack,
-            Position::CenterBack,
-        ],
-        4 => vec![
-            Position::LeftBack,
-            Position::CenterBack,
-            Position::CenterBack,
-            Position::RightBack,
-        ],
-        5 => vec![
-            Position::LeftWingBack,
-            Position::CenterBack,
-            Position::CenterBack,
-            Position::CenterBack,
-            Position::RightWingBack,
-        ],
-        _ => vec![Position::CenterBack; count],
-    }
-}
-
-fn midfield_line(count: usize) -> Vec<Position> {
-    match count {
-        2 => vec![Position::CentralMidfielder, Position::CentralMidfielder],
-        3 => vec![
-            Position::DefensiveMidfielder,
-            Position::CentralMidfielder,
-            Position::AttackingMidfielder,
-        ],
-        4 => vec![
-            Position::LeftMidfielder,
-            Position::CentralMidfielder,
-            Position::CentralMidfielder,
-            Position::RightMidfielder,
-        ],
-        5 => vec![
-            Position::LeftMidfielder,
-            Position::DefensiveMidfielder,
-            Position::CentralMidfielder,
-            Position::AttackingMidfielder,
-            Position::RightMidfielder,
-        ],
-        _ => vec![Position::CentralMidfielder; count],
-    }
-}
-
-fn deep_midfield_line(count: usize) -> Vec<Position> {
-    match count {
-        1 => vec![Position::DefensiveMidfielder],
-        2 => vec![Position::DefensiveMidfielder, Position::CentralMidfielder],
-        _ => vec![Position::DefensiveMidfielder; count],
-    }
-}
-
-fn attacking_midfield_line(count: usize) -> Vec<Position> {
-    match count {
-        1 => vec![Position::AttackingMidfielder],
-        2 => vec![Position::AttackingMidfielder, Position::AttackingMidfielder],
-        3 => vec![
-            Position::LeftMidfielder,
-            Position::AttackingMidfielder,
-            Position::RightMidfielder,
-        ],
-        _ => vec![Position::AttackingMidfielder; count],
-    }
-}
-
-fn forward_line(count: usize) -> Vec<Position> {
-    match count {
-        1 => vec![Position::Striker],
-        2 => vec![Position::Striker, Position::Striker],
-        3 => vec![
-            Position::LeftWinger,
-            Position::Striker,
-            Position::RightWinger,
-        ],
-        _ => vec![Position::Striker; count],
-    }
-}
-
-fn primary_position(player: &Player) -> Position {
-    let preferred = if player.natural_position.is_legacy_bucket() {
-        player.position.clone()
+fn primary_role(player: &Player) -> LolRole {
+    if player.natural_position != LolRole::Unknown {
+        player.natural_position
     } else {
-        player.natural_position.clone()
-    };
-
-    canonical_position(&preferred)
-}
-
-fn canonical_position(position: &Position) -> Position {
-    match position {
-        Position::Goalkeeper => Position::Goalkeeper,
-        Position::Defender => Position::CenterBack,
-        Position::Midfielder => Position::CentralMidfielder,
-        Position::Forward => Position::Striker,
-        granular => granular.clone(),
+        player.position
     }
 }
 
-fn compatibility_penalty(player: &Player, slot_position: &Position) -> f64 {
-    let primary = primary_position(player);
-    if &primary == slot_position {
+fn compatibility_penalty(player: &Player, slot_role: &LolRole) -> f64 {
+    let primary = primary_role(player);
+    if &primary == slot_role {
         return 0.0;
     }
 
-    let alternates = player
-        .alternate_positions
-        .iter()
-        .map(canonical_position)
-        .collect::<Vec<_>>();
-
-    if alternates.iter().any(|position| position == slot_position) {
+    if player.alternate_positions.contains(slot_role) {
         4.0
-    } else if primary.to_group_position() == slot_position.to_group_position() {
+    } else if same_role_group(&primary, slot_role) {
         8.0
     } else {
         14.0
     }
 }
 
-fn footedness_penalty(player: &Player, slot_position: &Position) -> f64 {
-    let Some(required_side) = slot_side(slot_position) else {
-        return 0.0;
-    };
-
-    match (player.footedness, required_side) {
-        (Footedness::Both, _) => 0.0,
-        (Footedness::Left, Side::Left) | (Footedness::Right, Side::Right) => 0.0,
-        _ => (10_i32 - (player.weak_foot.clamp(1, 5) as i32 * 2)).max(0) as f64,
-    }
+fn same_role_group(a: &LolRole, b: &LolRole) -> bool {
+    matches!(
+        (a, b),
+        (LolRole::Top, LolRole::Support)
+            | (LolRole::Support, LolRole::Top)
+            | (LolRole::Jungle, LolRole::Mid)
+            | (LolRole::Mid, LolRole::Jungle)
+            | (LolRole::Adc, LolRole::Mid)
+            | (LolRole::Mid, LolRole::Adc)
+    )
 }
 
-fn weighted_score(player: &Player, position: &Position) -> f64 {
+fn weighted_score(player: &Player, role: &LolRole) -> f64 {
     let attrs = &player.attributes;
-    match position {
-        Position::Goalkeeper => weighted_average(&[
-            (attrs.handling, 28),
-            (attrs.reflexes, 28),
-            (attrs.aerial, 14),
-            (attrs.positioning, 10),
-            (attrs.decisions, 10),
-            (attrs.composure, 5),
-            (attrs.strength, 5),
-        ]),
-        Position::RightBack | Position::LeftBack => weighted_average(&[
-            (attrs.pace, 18),
-            (attrs.stamina, 16),
-            (attrs.tackling, 17),
-            (attrs.defending, 16),
+    match role {
+        LolRole::Top => weighted_average(&[
+            (attrs.defending, 22),
+            (attrs.tackling, 18),
+            (attrs.strength, 16),
             (attrs.positioning, 12),
-            (attrs.passing, 10),
-            (attrs.dribbling, 6),
-            (attrs.decisions, 5),
-        ]),
-        Position::CenterBack => weighted_average(&[
-            (attrs.defending, 24),
-            (attrs.tackling, 18),
-            (attrs.positioning, 18),
-            (attrs.strength, 14),
-            (attrs.aerial, 12),
-            (attrs.decisions, 8),
-            (attrs.composure, 6),
-        ]),
-        Position::RightWingBack | Position::LeftWingBack => weighted_average(&[
-            (attrs.pace, 18),
-            (attrs.stamina, 18),
-            (attrs.tackling, 14),
-            (attrs.defending, 12),
-            (attrs.passing, 13),
-            (attrs.dribbling, 11),
-            (attrs.vision, 7),
-            (attrs.decisions, 7),
-        ]),
-        Position::DefensiveMidfielder => weighted_average(&[
-            (attrs.tackling, 18),
-            (attrs.positioning, 18),
-            (attrs.decisions, 16),
-            (attrs.passing, 14),
-            (attrs.defending, 12),
-            (attrs.stamina, 10),
-            (attrs.vision, 7),
-            (attrs.strength, 5),
-        ]),
-        Position::CentralMidfielder => weighted_average(&[
-            (attrs.passing, 20),
-            (attrs.vision, 16),
-            (attrs.decisions, 16),
             (attrs.stamina, 12),
-            (attrs.dribbling, 10),
-            (attrs.positioning, 9),
-            (attrs.teamwork, 9),
-            (attrs.tackling, 8),
+            (attrs.aerial, 10),
+            (attrs.decisions, 6),
+            (attrs.composure, 4),
         ]),
-        Position::AttackingMidfielder => weighted_average(&[
+        LolRole::Jungle => weighted_average(&[
+            (attrs.decisions, 20),
+            (attrs.vision, 18),
+            (attrs.positioning, 16),
+            (attrs.stamina, 14),
+            (attrs.passing, 12),
+            (attrs.tackling, 10),
+            (attrs.dribbling, 6),
+            (attrs.pace, 4),
+        ]),
+        LolRole::Mid => weighted_average(&[
             (attrs.vision, 20),
             (attrs.passing, 18),
-            (attrs.dribbling, 16),
-            (attrs.decisions, 14),
-            (attrs.shooting, 10),
-            (attrs.positioning, 8),
-            (attrs.composure, 8),
-            (attrs.pace, 6),
-        ]),
-        Position::RightMidfielder | Position::LeftMidfielder => weighted_average(&[
-            (attrs.pace, 17),
-            (attrs.stamina, 16),
-            (attrs.passing, 15),
+            (attrs.decisions, 16),
             (attrs.dribbling, 14),
-            (attrs.vision, 10),
-            (attrs.decisions, 10),
             (attrs.positioning, 10),
-            (attrs.tackling, 8),
+            (attrs.stamina, 10),
+            (attrs.composure, 8),
+            (attrs.pace, 4),
         ]),
-        Position::RightWinger | Position::LeftWinger => weighted_average(&[
-            (attrs.pace, 22),
-            (attrs.dribbling, 22),
-            (attrs.passing, 14),
-            (attrs.shooting, 12),
-            (attrs.vision, 10),
-            (attrs.decisions, 8),
-            (attrs.positioning, 6),
-            (attrs.stamina, 6),
-        ]),
-        Position::Striker => weighted_average(&[
+        LolRole::Adc => weighted_average(&[
             (attrs.shooting, 26),
             (attrs.positioning, 18),
-            (attrs.decisions, 14),
-            (attrs.pace, 12),
-            (attrs.dribbling, 10),
-            (attrs.strength, 8),
-            (attrs.composure, 8),
-            (attrs.aerial, 4),
+            (attrs.dribbling, 16),
+            (attrs.pace, 14),
+            (attrs.decisions, 12),
+            (attrs.strength, 6),
+            (attrs.composure, 6),
+            (attrs.vision, 2),
         ]),
-        Position::Defender | Position::Midfielder | Position::Forward => unreachable!(),
+        LolRole::Support => weighted_average(&[
+            (attrs.vision, 22),
+            (attrs.passing, 20),
+            (attrs.positioning, 16),
+            (attrs.decisions, 14),
+            (attrs.teamwork, 12),
+            (attrs.handling, 8),
+            (attrs.tackling, 6),
+            (attrs.composure, 2),
+        ]),
+        LolRole::Unknown => 40.0,
     }
 }
 
-fn critical_penalty(player: &Player, position: &Position) -> f64 {
+fn critical_penalty(player: &Player, role: &LolRole) -> f64 {
     let attrs = &player.attributes;
-    let critical_min = match position {
-        Position::Goalkeeper => attrs.handling.min(attrs.reflexes).min(attrs.positioning),
-        Position::RightBack | Position::LeftBack => {
-            attrs.tackling.min(attrs.defending).min(attrs.positioning)
-        }
-        Position::CenterBack => attrs.defending.min(attrs.tackling).min(attrs.positioning),
-        Position::RightWingBack | Position::LeftWingBack => {
-            attrs.pace.min(attrs.stamina).min(attrs.tackling)
-        }
-        Position::DefensiveMidfielder => attrs.tackling.min(attrs.positioning).min(attrs.passing),
-        Position::CentralMidfielder => attrs.passing.min(attrs.vision).min(attrs.decisions),
-        Position::AttackingMidfielder => attrs.vision.min(attrs.passing).min(attrs.dribbling),
-        Position::RightMidfielder | Position::LeftMidfielder => {
-            attrs.pace.min(attrs.passing).min(attrs.stamina)
-        }
-        Position::RightWinger | Position::LeftWinger => {
-            attrs.pace.min(attrs.dribbling).min(attrs.passing)
-        }
-        Position::Striker => attrs.shooting.min(attrs.positioning).min(attrs.decisions),
-        Position::Defender | Position::Midfielder | Position::Forward => 50,
+    let critical_min = match role {
+        LolRole::Top => attrs
+            .defending
+            .min(attrs.tackling)
+            .min(attrs.positioning)
+            .min(attrs.strength),
+        LolRole::Jungle => attrs
+            .decisions
+            .min(attrs.vision)
+            .min(attrs.positioning)
+            .min(attrs.stamina),
+        LolRole::Mid => attrs.passing.min(attrs.vision).min(attrs.decisions),
+        LolRole::Adc => attrs
+            .shooting
+            .min(attrs.positioning)
+            .min(attrs.decisions)
+            .min(attrs.dribbling),
+        LolRole::Support => attrs
+            .vision
+            .min(attrs.passing)
+            .min(attrs.positioning)
+            .min(attrs.teamwork),
+        LolRole::Unknown => 50,
     };
 
     if critical_min >= 45 {
@@ -332,39 +162,19 @@ fn weighted_average(values: &[(u8, i32)]) -> f64 {
         / 100.0
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Side {
-    Left,
-    Right,
-}
-
-fn slot_side(position: &Position) -> Option<Side> {
-    match position {
-        Position::LeftBack
-        | Position::LeftWingBack
-        | Position::LeftMidfielder
-        | Position::LeftWinger => Some(Side::Left),
-        Position::RightBack
-        | Position::RightWingBack
-        | Position::RightMidfielder
-        | Position::RightWinger => Some(Side::Right),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use domain::player::PlayerAttributes;
 
-    fn make_player(position: Position) -> Player {
+    fn make_player(role: LolRole) -> Player {
         Player::new(
             "p-1".to_string(),
             "Test".to_string(),
             "Test Player".to_string(),
             "2000-01-01".to_string(),
             "GB".to_string(),
-            position,
+            role,
             PlayerAttributes {
                 pace: 70,
                 stamina: 70,
@@ -390,29 +200,20 @@ mod tests {
     }
 
     #[test]
-    fn formation_slots_return_exact_role_layout() {
-        assert_eq!(
-            formation_slots("4-4-2"),
-            vec![
-                Position::Goalkeeper,
-                Position::LeftBack,
-                Position::CenterBack,
-                Position::CenterBack,
-                Position::RightBack,
-                Position::LeftMidfielder,
-                Position::CentralMidfielder,
-                Position::CentralMidfielder,
-                Position::RightMidfielder,
-                Position::Striker,
-                Position::Striker,
-            ]
-        );
+    fn formation_slots_returns_five_lol_roles() {
+        let slots = formation_slots("4-4-2");
+        assert_eq!(slots.len(), 5);
+        assert_eq!(slots[0], LolRole::Top);
+        assert_eq!(slots[1], LolRole::Jungle);
+        assert_eq!(slots[2], LolRole::Mid);
+        assert_eq!(slots[3], LolRole::Adc);
+        assert_eq!(slots[4], LolRole::Support);
     }
 
     #[test]
     fn role_specific_rating_favors_matching_profile() {
-        let mut player = make_player(Position::CenterBack);
-        player.natural_position = Position::CenterBack;
+        let mut player = make_player(LolRole::Top);
+        player.natural_position = LolRole::Top;
         player.attributes.defending = 88;
         player.attributes.tackling = 84;
         player.attributes.positioning = 82;
@@ -422,43 +223,21 @@ mod tests {
         player.attributes.shooting = 40;
         player.attributes.dribbling = 44;
 
-        assert!(
-            ovr_for_position(&player, &Position::CenterBack)
-                > ovr_for_position(&player, &Position::Striker)
-        );
-    }
-
-    #[test]
-    fn assignment_penalty_drops_wrong_side_fullback_more_with_poor_weak_foot() {
-        let mut player = make_player(Position::RightBack);
-        player.natural_position = Position::RightBack;
-        player.footedness = Footedness::Right;
-        player.weak_foot = 1;
-        player.attributes.tackling = 82;
-        player.attributes.defending = 80;
-        player.attributes.positioning = 78;
-        player.attributes.pace = 81;
-        player.attributes.stamina = 79;
-
-        let same_side = effective_rating_for_assignment(&player, &Position::RightBack);
-        let wrong_side = effective_rating_for_assignment(&player, &Position::LeftBack);
-
-        assert!(same_side > wrong_side);
+        assert!(ovr_for_role(&player, &LolRole::Top) > ovr_for_role(&player, &LolRole::Adc));
     }
 
     #[test]
     fn alternate_positions_reduce_assignment_penalty() {
-        let mut player = make_player(Position::CentralMidfielder);
-        player.natural_position = Position::CentralMidfielder;
-        player.alternate_positions = vec![Position::AttackingMidfielder];
+        let mut player = make_player(LolRole::Mid);
+        player.natural_position = LolRole::Mid;
+        player.alternate_positions = vec![LolRole::Adc];
         player.attributes.passing = 82;
         player.attributes.vision = 84;
         player.attributes.decisions = 78;
         player.attributes.dribbling = 76;
 
-        let alternate_role =
-            effective_rating_for_assignment(&player, &Position::AttackingMidfielder);
-        let out_of_group_role = effective_rating_for_assignment(&player, &Position::RightBack);
+        let alternate_role = effective_rating_for_assignment(&player, &LolRole::Adc);
+        let out_of_group_role = effective_rating_for_assignment(&player, &LolRole::Top);
 
         assert!(alternate_role > out_of_group_role);
     }

@@ -1,5 +1,6 @@
-import type { PlayerData } from "../../store/gameStore";
+import type { PlayerData, LolRole } from "../../store/gameStore";
 import { calcOvr } from "../../lib/helpers";
+import { toLolRole } from "../../lib/lolIdentity";
 
 export type SquadSection = "xi" | "bench";
 export type DragState = {
@@ -7,15 +8,10 @@ export type DragState = {
   from: SquadSection;
   slotIndex: number | null;
 };
-
-export type PitchRow = { label: string; y: string; positions: string[] };
-export type PitchSlot = {
-  index: number;
-  position: string;
-  player: PlayerData | null;
-};
+export type PitchRow = { line?: number; positions: string[]; slots?: PitchSlot[]; label?: string; y?: string };
+export type PitchSlot = { line?: number; col?: number; width?: number; role?: string; player?: PlayerData; position?: string; index?: number };
 export type PitchSlotRow = PitchRow & { slots: PitchSlot[] };
-export type LolRole = "TOP" | "JUNGLE" | "MID" | "ADC" | "SUPPORT";
+export { LolRole };
 
 export const CORE_POSITIONS = [
   "Goalkeeper",
@@ -216,11 +212,10 @@ export function translatePositionAbbreviation(
 }
 
 /**
- * Get the LolRole for a player directly from their natural_position
- * (no mapping needed - already LolRole from backend)
+ * Get the LolRole for a player, converting legacy positions if needed
  */
 export function getLolRoleForPlayer(player: PlayerData): LolRole {
-  return player.natural_position;
+  return toLolRole(player.natural_position || player.position || "");
 }
 
 export function getPreferredPositions(player: PlayerData): string[] {
@@ -377,12 +372,12 @@ export function buildStartingXIIds(
   void _formation;
 
   const roleOrder: LolRole[] = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
-  const roleTargetPosition: Record<LolRole, string> = {
-    TOP: "Defender",
-    JUNGLE: "Midfielder",
-    MID: "AttackingMidfielder",
-    ADC: "Forward",
-    SUPPORT: "DefensiveMidfielder",
+  const roleTargetPosition: Record<LolRole, LolRole> = {
+    TOP: "TOP",
+    JUNGLE: "JUNGLE",
+    MID: "MID",
+    ADC: "ADC",
+    SUPPORT: "SUPPORT",
   };
 
   const roleFromPlayer = getLolRoleForPlayer;
@@ -420,7 +415,7 @@ export function buildStartingXIIds(
   while (xi.length < 11) {
     const candidates = available
       .filter((player) => !used.has(player.id))
-      .sort((a, b) => calcOvr(b, b.natural_position || b.position) - calcOvr(a, a.natural_position || a.position));
+      .sort((a, b) => calcOvr(b, toLolRole(b.natural_position || b.position || "")) - calcOvr(a, toLolRole(a.natural_position || a.position || "")));
 
     const bestPlayer = candidates[0];
     if (!bestPlayer) break;
@@ -443,7 +438,7 @@ export function buildPitchSlotRows(
       const slot: PitchSlot = {
         index: slotIndex,
         position,
-        player: playersById.get(xiIds[slotIndex]) ?? null,
+        player: playersById.get(xiIds[slotIndex]) ?? undefined,
       };
       slotIndex += 1;
       return slot;

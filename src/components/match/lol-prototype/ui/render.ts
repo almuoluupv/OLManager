@@ -16,7 +16,6 @@ const iconCache = new Map<string, HTMLImageElement>();
 const structureMetaById = new Map(STRUCTURES_LAYOUT.map((s) => [s.id, s]));
 const CHAMPION_DRAW_RADIUS = 11.8;
 const SUMMON_DRAW_RADIUS = CHAMPION_DRAW_RADIUS;
-const SUMMON_ICON_SIZE = SUMMON_DRAW_RADIUS * 2;
 const CHAMPION_HP_BAR_WIDTH = 26;
 const CHAMPION_HP_BAR_Y_OFFSET = 15;
 const ENTITY_HP_BAR_HEIGHT = 3;

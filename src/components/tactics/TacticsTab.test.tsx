@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import type { GameStateData, PlayerData, TeamData } from "../../store/gameStore";
+import type { LolRole } from "../squad/SquadTab.helpers";
 import TacticsTab from "./TacticsTab";
 
 vi.mock("react-i18next", () => ({
@@ -26,7 +27,7 @@ const mockedInvoke = vi.mocked(invoke);
 
 const makePlayer = (
   id: string,
-  position: string,
+  position: LolRole,
   overrides: Partial<PlayerData> = {},
 ): PlayerData => ({
   id,
@@ -114,8 +115,8 @@ const makeTeam = (overrides: Partial<TeamData> = {}): TeamData => ({
 
 const makeGameState = (): GameStateData => {
   const players = [
-    makePlayer("gk1", "Goalkeeper"),
-    makePlayer("d1", "Center Back", {
+    makePlayer("gk1", "SUPPORT"),
+    makePlayer("d1", "TOP", {
       attributes: {
         pace: 50,
         stamina: 60,
@@ -138,10 +139,10 @@ const makeGameState = (): GameStateData => {
         aerial: 15,
       },
     }),
-    makePlayer("d2", "Defender"),
-    makePlayer("d3", "Defender"),
-    makePlayer("d4", "Defender"),
-    makePlayer("m1", "Midfielder", {
+    makePlayer("d2", "TOP"),
+    makePlayer("d3", "TOP"),
+    makePlayer("d4", "TOP"),
+    makePlayer("m1", "MID", {
       attributes: {
         pace: 70,
         stamina: 74,
@@ -164,12 +165,12 @@ const makeGameState = (): GameStateData => {
         aerial: 10,
       },
     }),
-    makePlayer("m2", "Midfielder"),
-    makePlayer("m3", "Midfielder"),
-    makePlayer("m4", "Midfielder"),
-    makePlayer("f1", "Forward"),
-    makePlayer("f2", "Forward"),
-    makePlayer("d5", "Defender", { match_name: "Bench DEF" }),
+    makePlayer("m2", "MID"),
+    makePlayer("m3", "MID"),
+    makePlayer("m4", "MID"),
+    makePlayer("f1", "ADC"),
+    makePlayer("f2", "ADC"),
+    makePlayer("d5", "TOP", { match_name: "Bench DEF" }),
   ];
 
   return {
@@ -324,8 +325,8 @@ describe("TacticsTab", () => {
       player.id === "d5"
         ? {
             ...player,
-            position: "Midfielder",
-            natural_position: "Defender",
+            position: "MID",
+            natural_position: "TOP",
           }
         : player,
     );

@@ -153,7 +153,7 @@ function makeGameState(): GameStateData {
       satisfaction: 50,
       fan_approval: 50,
       team_id: "fnc",
-      career_stats: { matches: 0, wins: 0, draws: 0, losses: 0, trophies: 0 },
+      career_stats: { matches_managed: 0, wins: 0, draws: 0, losses: 0, trophies: 0, best_finish: null },
       career_history: [],
     },
     teams: [],
@@ -293,7 +293,7 @@ describe("PressConference LoL social content", () => {
     });
 
     expect(snapshotWithRuntimeEvents.events).toEqual([
-      { minute: 3, event_type: "FirstBlood", side: "Home", zone: "mid", player_id: null, secondary_player_id: null },
+      { minute: 3, event_type: "FirstBlood", side: "Home", zone: "MID", player_id: null, secondary_player_id: null },
     ]);
     expect(questions.map((question) => question.id)).toContain("first-blood-impact");
   });

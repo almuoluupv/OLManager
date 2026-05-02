@@ -5,10 +5,9 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use domain::player::{Player, Position};
+use domain::player::Player;
 use ofm_core::game::Game;
 use ofm_core::player_identity;
-use ofm_core::player_rating::{effective_rating_for_assignment, formation_slots};
 
 use crate::game_database::GameDatabase;
 use crate::game_persistence::{GamePersistenceReader, GamePersistenceWriter};
@@ -309,92 +308,12 @@ pub(crate) fn canonicalize_game_starting_xi_ids(game: &mut Game) -> bool {
     changed
 }
 
+// LoL roles don't have mirrored left/right positions, no canonicalization needed.
 fn canonicalize_team_starting_xi_ids(
-    team: &mut domain::team::Team,
-    players_by_id: &HashMap<String, Player>,
+    _team: &mut domain::team::Team,
+    _players_by_id: &HashMap<String, Player>,
 ) -> bool {
-    let row_lengths = formation_row_lengths(&team.formation);
-    let slots = formation_slots(&team.formation);
-    let mut row_start_index = 0;
-    let mut changed = false;
-
-    for row_length in row_lengths {
-        if row_length < 2 {
-            row_start_index += row_length;
-            continue;
-        }
-
-        let left_index = row_start_index;
-        let right_index = row_start_index + row_length - 1;
-        let left_slot = slots.get(left_index);
-        let right_slot = slots.get(right_index);
-
-        row_start_index += row_length;
-
-        let (Some(left_slot), Some(right_slot)) = (left_slot, right_slot) else {
-            continue;
-        };
-
-        if !is_mirrored_side_pair(left_slot, right_slot) {
-            continue;
-        }
-
-        let left_player = team
-            .starting_xi_ids
-            .get(left_index)
-            .and_then(|id| players_by_id.get(id));
-        let right_player = team
-            .starting_xi_ids
-            .get(right_index)
-            .and_then(|id| players_by_id.get(id));
-
-        let (Some(left_player), Some(right_player)) = (left_player, right_player) else {
-            continue;
-        };
-
-        let current_fit = effective_rating_for_assignment(left_player, left_slot)
-            + effective_rating_for_assignment(right_player, right_slot);
-        let swapped_fit = effective_rating_for_assignment(left_player, right_slot)
-            + effective_rating_for_assignment(right_player, left_slot);
-
-        if swapped_fit > current_fit {
-            team.starting_xi_ids.swap(left_index, right_index);
-            changed = true;
-        }
-    }
-
-    changed
-}
-
-fn formation_row_lengths(formation: &str) -> Vec<usize> {
-    let parts: Vec<usize> = formation
-        .split('-')
-        .filter_map(|part| part.parse::<usize>().ok())
-        .collect();
-
-    match parts.as_slice() {
-        [defenders, midfielders, forwards] => vec![1, *defenders, *midfielders, *forwards],
-        [defenders, deep_midfielders, attacking_midfielders, forwards] => {
-            vec![
-                1,
-                *defenders,
-                *deep_midfielders,
-                *attacking_midfielders,
-                *forwards,
-            ]
-        }
-        _ => formation_row_lengths("4-4-2"),
-    }
-}
-
-fn is_mirrored_side_pair(left_position: &Position, right_position: &Position) -> bool {
-    matches!(
-        (left_position, right_position),
-        (Position::LeftBack, Position::RightBack)
-            | (Position::LeftWingBack, Position::RightWingBack)
-            | (Position::LeftMidfielder, Position::RightMidfielder)
-            | (Position::LeftWinger, Position::RightWinger)
-    )
+    false
 }
 
 #[cfg(test)]

@@ -162,7 +162,7 @@ export function getClubInstallationContract(team: TeamData): InstallationContrac
   const hubLevel = getMainHubLevel(levels);
 
   return FACILITY_MODULE_DEFINITIONS.map((definition) => {
-    const level = definition.levelKey === "hub" ? hubLevel : levels[definition.levelKey];
+    const level = definition.levelKey === "hub" ? hubLevel : (levels[definition.levelKey] ?? 0);
 
     return {
       key: definition.key,

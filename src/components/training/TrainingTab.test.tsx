@@ -84,8 +84,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2002-01-01",
     nationality: "GB",
-    position: "Forward",
-    natural_position: "Forward",
+    position: "ADC",
+    natural_position: "ADC",
     alternate_positions: [],
     training_focus: null,
     attributes: {

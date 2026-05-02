@@ -17,8 +17,14 @@ pub fn upsert_player(conn: &Connection, p: &Player) -> Result<(), String> {
         serde_json::to_string(&p.transfer_offers).map_err(|e| format!("JSON error: {}", e))?;
     let morale_core_json =
         serde_json::to_string(&p.morale_core).map_err(|e| format!("JSON error: {}", e))?;
-    let position_str = format!("{:?}", p.position);
-    let natural_position_str = format!("{:?}", p.natural_position);
+    let position_str = serde_json::to_string(&p.position)
+        .map_err(|e| format!("JSON error: {}", e))?
+        .trim_matches('"')
+        .to_string();
+    let natural_position_str = serde_json::to_string(&p.natural_position)
+        .map_err(|e| format!("JSON error: {}", e))?
+        .trim_matches('"')
+        .to_string();
     let alt_positions_json =
         serde_json::to_string(&p.alternate_positions).map_err(|e| format!("JSON error: {}", e))?;
     let footedness_str = format!("{:?}", p.footedness);
@@ -94,6 +100,13 @@ fn parse_role(s: &str) -> domain::stats::LolRole {
         "ADC" => domain::stats::LolRole::Adc,
         "SUPPORT" => domain::stats::LolRole::Support,
         "" | "UNKNOWN" => domain::stats::LolRole::Unknown,
+
+        // === LolRole Debug format (TitleCase) from format!("{:?}", ...) ===
+        "Top" => domain::stats::LolRole::Top,
+        "Jungle" => domain::stats::LolRole::Jungle,
+        "Mid" => domain::stats::LolRole::Mid,
+        "Adc" => domain::stats::LolRole::Adc,
+        "Support" => domain::stats::LolRole::Support,
 
         // === Legacy football position strings (for backward compatibility) ===
         // Goalkeeper/Defensive → Support

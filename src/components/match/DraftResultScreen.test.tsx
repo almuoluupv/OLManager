@@ -78,7 +78,7 @@ function createResult(overrides: Partial<DraftMatchResult> = {}): DraftMatchResu
 const snapshot = {
   home_team: { id: "team-1", name: "Alpha FC", players: [] },
   away_team: { id: "team-2", name: "Beta FC", players: [] },
-} as MatchSnapshot;
+} as unknown as MatchSnapshot;
 
 describe("DraftResultScreen", () => {
   it("renders game tabs and switches displayed game result", () => {

@@ -73,7 +73,7 @@ export default function TeamProfileHistoryCard({
                   {winRate}
                 </td>
                 <td className="py-3 px-5 text-center text-sm text-gray-600 dark:text-gray-400 tabular-nums">
-                  {record.points}
+                  {record.won * 3 + record.drawn}
                 </td>
               </tr>
             )})}

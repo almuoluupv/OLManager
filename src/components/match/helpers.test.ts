@@ -18,7 +18,7 @@ import type { GameStateData } from "../../store/gameStore";
 const makePlayer = (overrides: Partial<EnginePlayerData> = {}): EnginePlayerData => ({
   id: "p1",
   name: "Test Player",
-  position: "Midfielder",
+  position: "MID",
   condition: 100,
   pace: 70, stamina: 70, strength: 70, agility: 70,
   passing: 70, shooting: 70, tackling: 70, dribbling: 70,

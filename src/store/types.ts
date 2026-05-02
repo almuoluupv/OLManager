@@ -181,6 +181,8 @@ export type TeamSide = "Blue" | "Red";
 
 export type LolRole = "TOP" | "JUNGLE" | "MID" | "ADC" | "SUPPORT";
 
+export type PlayerPosition = LolRole | "Goalkeeper" | "Defender" | "RightBack" | "CenterBack" | "LeftBack" | "RightWingBack" | "LeftWingBack" | "Midfielder" | "CentralMidfielder" | "AttackingMidfielder" | "RightMidfielder" | "LeftMidfielder" | "DefensiveMidfielder" | "Forward" | "RightWinger" | "LeftWinger" | "Striker";
+
 export type MatchEndReason = "NexusDestroyed" | "Surrender";
 
 type LegacyCompatibilityValue = any;
@@ -302,9 +304,9 @@ export interface PlayerData {
   competitive_region?: string;
   birth_country?: string | null;
   profile_image_url?: string | null;
-  position: LolRole;
-  natural_position: LolRole;
-  alternate_positions: LolRole[];
+  position: PlayerPosition;
+  natural_position: PlayerPosition;
+  alternate_positions: PlayerPosition[];
   footedness?: string;
   weak_foot?: number;
   training_focus: string | null;

@@ -6,6 +6,7 @@ import type {
   TransferOfferData,
 } from "../../store/gameStore";
 import { formatVal, getTeamName, positionBadgeVariant } from "../../lib/helpers";
+import { toLolRole } from "../../lib/lolIdentity";
 import type { TransferNegotiationResponseData } from "../../services/transfersService";
 import NegotiationFeedbackPanel, {
   type NegotiationFeedbackPanelData,
@@ -65,7 +66,7 @@ export default function TransferCounterOfferModal({
         </h3>
         <div className="flex items-center gap-3 mb-4">
           <Badge
-            variant={positionBadgeVariant(counterTarget.player.position)}
+            variant={positionBadgeVariant(toLolRole(counterTarget.player.position || ""))}
             size="sm"
           >
             {lolRole === "JUNGLE" ? "JG" : lolRole}

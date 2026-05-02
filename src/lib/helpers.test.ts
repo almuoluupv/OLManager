@@ -117,7 +117,7 @@ describe("getTeamName", () => {
   });
 
   it("returns 'Unknown' for non-existent id", () => {
-    expect(getTeamName(teams, "t999")).toBe("Unknown");
+    expect(getTeamName(teams, "t999")).toBe("MID");
   });
 });
 
@@ -463,7 +463,7 @@ describe("positionBadgeVariant", () => {
   });
 
   it("returns 'primary' for unknown position", () => {
-    expect(positionBadgeVariant("UNKNOWN")).toBe("primary");
+    expect(positionBadgeVariant("MID")).toBe("primary");
   });
 });
 

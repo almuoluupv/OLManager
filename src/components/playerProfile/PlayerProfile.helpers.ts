@@ -1,5 +1,4 @@
 import type {
-    PlayerData,
     TeamData,
 } from "../../store/gameStore";
 import type { TOptions } from "i18next";

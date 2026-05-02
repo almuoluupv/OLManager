@@ -6,7 +6,7 @@ import {
 import { calculateLolOvr } from "../../lib/lolPlayerStats";
 import type { PlayerData } from "../../store/gameStore";
 import { Card, CardBody, CardHeader, CountryFlag, ProgressBar, RoleBadge } from "../ui";
-import { getLolRoleForPlayer, type LolRole } from "../squad/SquadTab.helpers";
+import { getLolRoleForPlayer } from "../squad/SquadTab.helpers";
 import type { TeamProfileTranslate } from "./TeamProfile.types";
 
 interface TeamProfileRosterCardProps {

@@ -60,8 +60,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2000-01-01",
     nationality: "England",
-    position: "Forward",
-    natural_position: "Forward",
+    position: "ADC",
+    natural_position: "ADC",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -235,6 +235,7 @@ describe("TransfersTab.model", () => {
       myTransferList: [createPlayer({ id: "transfer" })],
       myLoanList: [createPlayer({ id: "loan" })],
       marketPlayers: [createPlayer({ id: "market" })],
+      erlPlayers: [],
       loanPlayers: [createPlayer({ id: "loan-market" })],
       playersWithOffers: [createPlayer({ id: "offers" })],
     };
@@ -255,16 +256,16 @@ describe("TransfersTab.model", () => {
         full_name: "Alan Keeper",
         match_name: "Keeper",
         nationality: "Spain",
-        natural_position: "Goalkeeper",
-        position: "Goalkeeper",
+        natural_position: "SUPPORT",
+        position: "SUPPORT",
       }),
       createPlayer({
         id: "forward",
         full_name: "Carlos Striker",
         match_name: "Carx",
         nationality: "Brazil",
-        natural_position: "Forward",
-        position: "Forward",
+        natural_position: "ADC",
+        position: "ADC",
       }),
     ];
 

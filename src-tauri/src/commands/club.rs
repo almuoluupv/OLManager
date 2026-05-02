@@ -6,7 +6,9 @@ use ofm_core::state::StateManager;
 
 #[tauri::command]
 pub fn upgrade_facility(state: State<'_, StateManager>, facility: String) -> Result<Game, String> {
-    upgrade_facility_internal(&state, &facility)
+    crate::error_reporter::track("upgrade_facility", (|| {
+        upgrade_facility_internal(&state, &facility)
+    })())
 }
 
 #[tauri::command]
@@ -14,12 +16,16 @@ pub fn upgrade_main_facility_module(
     state: State<'_, StateManager>,
     module: String,
 ) -> Result<Game, String> {
-    upgrade_main_facility_module_internal(&state, &module)
+    crate::error_reporter::track("upgrade_main_facility_module", (|| {
+        upgrade_main_facility_module_internal(&state, &module)
+    })())
 }
 
 #[tauri::command]
 pub fn expand_main_facility_hub(state: State<'_, StateManager>) -> Result<Game, String> {
-    expand_main_facility_hub_internal(&state)
+    crate::error_reporter::track("expand_main_facility_hub", (|| {
+        expand_main_facility_hub_internal(&state)
+    })())
 }
 
 fn upgrade_facility_internal(state: &StateManager, facility: &str) -> Result<Game, String> {

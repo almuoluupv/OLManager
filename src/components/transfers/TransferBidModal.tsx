@@ -10,6 +10,7 @@ import {
   getTeamName,
   positionBadgeVariant,
 } from "../../lib/helpers";
+import { toLolRole } from "../../lib/lolIdentity";
 import type {
   TransferDestinationData,
   TransferBidProjectionData,
@@ -79,7 +80,7 @@ export default function TransferBidModal({
           {t("transfers.makeBid")}
         </h3>
         <div className="flex items-center gap-3 mb-4">
-          <Badge variant={positionBadgeVariant(bidTarget.position)} size="sm">
+          <Badge variant={positionBadgeVariant(toLolRole(bidTarget.position || ""))} size="sm">
             {lolRole === "JUNGLE" ? "JG" : lolRole}
           </Badge>
           <div>

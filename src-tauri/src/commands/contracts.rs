@@ -41,7 +41,9 @@ pub async fn propose_renewal(
     weekly_wage: u32,
     contract_years: u32,
 ) -> Result<RenewalCommandResponse, String> {
-    propose_renewal_internal(&state, &player_id, weekly_wage, contract_years)
+    crate::error_reporter::track("propose_renewal", (|| {
+        propose_renewal_internal(&state, &player_id, weekly_wage, contract_years)
+    })())
 }
 
 #[tauri::command]
@@ -51,12 +53,14 @@ pub async fn delegate_renewals(
     max_wage_increase_pct: u32,
     max_contract_years: u32,
 ) -> Result<DelegatedRenewalCommandResponse, String> {
-    delegate_renewals_internal(
-        &state,
-        player_ids,
-        max_wage_increase_pct,
-        max_contract_years,
-    )
+    crate::error_reporter::track("delegate_renewals", (|| {
+        delegate_renewals_internal(
+            &state,
+            player_ids,
+            max_wage_increase_pct,
+            max_contract_years,
+        )
+    })())
 }
 
 #[tauri::command]
@@ -65,7 +69,9 @@ pub async fn preview_renewal_financial_impact(
     player_id: String,
     weekly_wage: u32,
 ) -> Result<RenewalFinancialProjectionCommandResponse, String> {
-    preview_renewal_financial_impact_internal(&state, &player_id, weekly_wage)
+    crate::error_reporter::track("preview_renewal_financial_impact", (|| {
+        preview_renewal_financial_impact_internal(&state, &player_id, weekly_wage)
+    })())
 }
 
 fn propose_renewal_internal(

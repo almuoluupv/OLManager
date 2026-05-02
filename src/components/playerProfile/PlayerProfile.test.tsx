@@ -34,7 +34,7 @@ vi.mock("react-i18next", () => ({
       if (key === "common.wage") return "Wage";
       if (key === "common.age") return "Age";
       if (key === "common.freeAgent") return "Free Agent";
-      if (key === "common.unknown") return "Unknown";
+      if (key === "common.unknown") return "MID";
       if (key === "finances.perWeekSuffix") return "/wk";
       if (key === "finances.marketValue") return "Market Value";
       if (key === "finances.contractRiskCritical") return "Critical";
@@ -162,8 +162,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2000-01-01",
     nationality: "GB",
-    position: "Forward",
-    natural_position: "Forward",
+    position: "ADC",
+    natural_position: "ADC",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -263,7 +263,7 @@ function createGameState(player: PlayerData): GameStateData {
   };
 }
 
-function defaultInvokeResponse(command: string) {
+function defaultInvokeResponse(_command: string) {
   return createGameState(createPlayer());
 }
 

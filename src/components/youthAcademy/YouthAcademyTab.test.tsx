@@ -95,8 +95,8 @@ function createGameState(): GameStateData {
     full_name: "Academy Player",
     match_name: "Prospect",
     date_of_birth: "2004-01-01",
-    natural_position: "Midfielder",
-    position: "Midfielder",
+    natural_position: "MID",
+    position: "MID",
     condition: 100,
     traits: [],
     attributes: {

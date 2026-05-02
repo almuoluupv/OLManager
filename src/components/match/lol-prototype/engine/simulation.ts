@@ -27,11 +27,12 @@ const CHAMPION_KILL_GOLD = 300;
 const CHAMPION_ASSIST_GOLD_TOTAL = 150;
 const CHAMPION_KILL_XP = 220;
 const ASSIST_RADIUS = 0.11;
-const MINION_GOLD = { melee: 22, ranged: 16 } as const;
-const MINION_XP = { melee: 58, ranged: 32 } as const;
+const MINION_GOLD = { melee: 22, ranged: 16, summon: 0 } as const;
+const MINION_XP = { melee: 58, ranged: 32, summon: 0 } as const;
 const MINION_PROFILE = {
   melee: { maxHp: 118, moveSpeed: 0.068, attackRange: 0.035, attackDamage: 6, attackCadence: 1.05 },
   ranged: { maxHp: 92, moveSpeed: 0.071, attackRange: 0.055, attackDamage: 7, attackCadence: 1.14 },
+  summon: { maxHp: 100, moveSpeed: 0.065, attackRange: 0.04, attackDamage: 5, attackCadence: 1.0 },
 } as const;
 const MINION_DAMAGE_TO_MINION_MULTIPLIER = 0.52;
 const CHAMPION_DAMAGE_TO_MINION_MULTIPLIER = 0.36;
@@ -1007,17 +1008,15 @@ export class PrototypeSimulation {
     const pressureCandidate = this.nextEnemyStructureForLane(ch.team, ch.lane, ch.pos);
     const pressureStructure = pressureCandidate && pressureCandidate.team === enemyTeam
       ? (() => {
-        if (ch.role !== "JGL") {
-          if (dist(ch.pos, pressureCandidate.pos) > LANE_STRUCTURE_PRESSURE_RADIUS) return null;
-          const hasAlliedWaveAtStructure = this.state.minions.some(
-            (m) => m.alive && m.team === ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.1,
-          );
-          if (!hasAlliedWaveAtStructure) return null;
-          const enemyWaveAtStructure = this.state.minions.filter(
-            (m) => m.alive && m.team !== ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.08,
-          ).length;
-          if (enemyWaveAtStructure >= 2) return null;
-        }
+        if (dist(ch.pos, pressureCandidate.pos) > LANE_STRUCTURE_PRESSURE_RADIUS) return null;
+        const hasAlliedWaveAtStructure = this.state.minions.some(
+          (m) => m.alive && m.team === ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.1,
+        );
+        if (!hasAlliedWaveAtStructure) return null;
+        const enemyWaveAtStructure = this.state.minions.filter(
+          (m) => m.alive && m.team !== ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.08,
+        ).length;
+        if (enemyWaveAtStructure >= 2) return null;
         return pressureCandidate;
       })()
       : null;
@@ -1037,14 +1036,11 @@ export class PrototypeSimulation {
 
     const nearestStructure = pressureCandidate && pressureCandidate.team === enemyTeam
       ? (() => {
-        // Laners should pressure structures only when truly nearby and with allied wave support.
-        if (ch.role !== "JGL") {
-          if (dist(ch.pos, pressureCandidate.pos) > LANE_STRUCTURE_PRESSURE_RADIUS) return null;
-          const hasAlliedWaveAtStructure = this.state.minions.some(
-            (m) => m.alive && m.team === ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.09,
-          );
-          if (!hasAlliedWaveAtStructure) return null;
-        }
+        if (dist(ch.pos, pressureCandidate.pos) > LANE_STRUCTURE_PRESSURE_RADIUS) return null;
+        const hasAlliedWaveAtStructure = this.state.minions.some(
+          (m) => m.alive && m.team === ch.team && m.lane === ch.lane && dist(m.pos, pressureCandidate.pos) <= 0.09,
+        );
+        if (!hasAlliedWaveAtStructure) return null;
         return pressureCandidate;
       })()
       : null;
@@ -2538,10 +2534,6 @@ export class PrototypeSimulation {
     return this.state.champions
       .filter((enemy) => enemy.alive && enemy.team !== m.team && enemy.lane === m.lane && dist(m.pos, enemy.pos) < range)
       .sort((a, b) => a.hp - b.hp || dist(m.pos, a.pos) - dist(m.pos, b.pos))[0] ?? null;
-  }
-
-  private nearestEnemyStructureForLane(team: TeamId, lane: LaneId, fromPos: Vec2) {
-    return this.nextEnemyStructureForLane(team, lane, fromPos);
   }
 
   private mandatoryEnemyStructuresForLane(team: TeamId, lane: LaneId) {

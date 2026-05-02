@@ -10,8 +10,8 @@ function makePlayer(overrides?: Partial<PlayerData>): PlayerData {
     full_name: "Test Player",
     date_of_birth: "2000-01-01",
     nationality: "ES",
-    position: "Midfielder",
-    natural_position: "Midfielder",
+    position: "MID",
+    natural_position: "MID",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -94,7 +94,7 @@ describe("PlayerProfileHeroCard potential UX", () => {
       <PlayerProfileHeroCard
         player={makePlayer()}
         ovr={80}
-        primaryPosition="Midfielder"
+        primaryRole="MID"
         age={24}
         teamName="Team"
         weeklySuffix="/wk"
@@ -127,7 +127,7 @@ describe("PlayerProfileHeroCard potential UX", () => {
       <PlayerProfileHeroCard
         player={makePlayer({ potential_research_eta_days: 5 })}
         ovr={80}
-        primaryPosition="Midfielder"
+        primaryRole="MID"
         age={24}
         teamName="Team"
         weeklySuffix="/wk"
@@ -157,7 +157,7 @@ describe("PlayerProfileHeroCard potential UX", () => {
       <PlayerProfileHeroCard
         player={makePlayer({ potential_revealed: 91 })}
         ovr={80}
-        primaryPosition="Midfielder"
+        primaryRole="MID"
         age={24}
         teamName="Team"
         weeklySuffix="/wk"

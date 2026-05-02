@@ -1,5 +1,7 @@
 mod application;
 mod commands;
+mod error_reporter;
+mod webhook_url;
 use commands::*;
 
 use application::lol_sim_v2::LolSimV2StoreState;
@@ -37,6 +39,18 @@ pub fn run() {
         .manage(LolSimV2StoreState::default())
         .setup(|app| {
             use tauri::Manager as TauriManager;
+
+            let webhook = webhook_url::DISCORD_WEBHOOK_URL.trim();
+            if !webhook.is_empty() && !webhook.starts_with("PEGA_AQUI") {
+                error_reporter::init(webhook.to_string());
+                std::panic::set_hook(Box::new(|info| {
+                    error_reporter::send_panic(info);
+                }));
+                log::info!("[setup] Discord error reporting enabled");
+            } else {
+                log::info!("[setup] Error reporting not configured (add URL to src/webhook_url.rs)");
+            }
+
             let app_data_dir = app
                 .path()
                 .app_data_dir()
@@ -44,6 +58,7 @@ pub fn run() {
             std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data dir");
 
             let saves_dir = app_data_dir.join("saves");
+            error_reporter::set_saves_dir(saves_dir.to_string_lossy().to_string());
             let mut save_manager =
                 SaveManager::init(&saves_dir).expect("Failed to initialize SaveManager");
 
@@ -174,7 +189,9 @@ pub fn run() {
             lol_sim_v2_skip_to_end,
             save_manager_avatar,
             load_manager_avatar,
-            update_manager_profile
+            update_manager_profile,
+            test_error_webhook,
+            report_frontend_error
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -562,7 +562,7 @@ export default function TacticsTab({
 
           <div className="mt-3 space-y-2">
             {coherence.map((item) => (
-              <div key={item.label} className="flex items-start justify-between gap-2 text-xs">
+              <div key={item.labelKey} className="flex items-start justify-between gap-2 text-xs">
                 <span className="text-gray-600 dark:text-gray-300">{t(item.labelKey)}</span>
                 <span
                   className={`font-heading font-bold ${
