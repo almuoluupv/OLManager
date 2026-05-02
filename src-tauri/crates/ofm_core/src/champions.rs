@@ -674,6 +674,172 @@ pub fn ensure_training_targets_from_mastery(game: &mut Game, player_id: &str) {
     }
 }
 
+pub fn delegate_champion_training_to_coach(game: &mut Game) -> Result<usize, String> {
+    let manager_team_id = game
+        .manager
+        .team_id
+        .clone()
+        .ok_or("No team assigned to manager".to_string())?;
+
+    let discovered: HashSet<String> = game
+        .champion_patch
+        .discovered_champion_ids
+        .iter()
+        .map(|id| normalize_key(id))
+        .collect();
+
+    let tier_weight = |tier: &str| -> i32 {
+        match tier.to_uppercase().as_str() {
+            "S" => 0,
+            "A" => 1,
+            "B" => 2,
+            "C" => 3,
+            "D" => 4,
+            _ => 99,
+        }
+    };
+
+    let role_for_position = |pos: &domain::player::LolRole| -> String {
+        match pos {
+            domain::player::LolRole::Top => "Top".to_string(),
+            domain::player::LolRole::Jungle => "Jungle".to_string(),
+            domain::player::LolRole::Mid => "Mid".to_string(),
+            domain::player::LolRole::Adc => "ADC".to_string(),
+            domain::player::LolRole::Support => "Support".to_string(),
+            domain::player::LolRole::Unknown => "Unknown".to_string(),
+        }
+    };
+
+    // Collect all meta entries upfront
+    let meta_entries: Vec<ChampionMetaEntry> = game.champion_patch.hidden_meta.clone();
+
+    // Collect mastery data upfront and build lookup map
+    let mastery_map: HashMap<String, u8> = game
+        .champion_masteries
+        .iter()
+        .map(|e| (format!("{}:{}", e.player_id, normalize_key(&e.champion_id)), e.mastery))
+        .collect();
+
+    let get_mastery = |player_id: &str, champ_id: &str| -> u8 {
+        *mastery_map
+            .get(&format!("{}:{}", player_id, normalize_key(champ_id)))
+            .unwrap_or(&MIN_MASTERY)
+    };
+
+    let player_ids: Vec<String> = game
+        .players
+        .iter()
+        .filter(|p| p.team_id == Some(manager_team_id.clone()))
+        .map(|p| p.id.clone())
+        .collect();
+
+    let mut results: Vec<(String, Vec<String>)> = Vec::new();
+
+    for player_id in player_ids {
+        let player = game.players.iter().find(|p| p.id == player_id).unwrap();
+        let role = role_for_position(&player.natural_position);
+
+        let role_meta: Vec<&ChampionMetaEntry> = meta_entries
+            .iter()
+            .filter(|entry| {
+                normalize_key(&entry.role) == normalize_key(&role)
+                    && discovered.contains(&normalize_key(&entry.champion_id))
+                    && tier_weight(&entry.tier) <= 1
+            })
+            .collect();
+
+        let mut sorted_meta = role_meta.clone();
+        sorted_meta.sort_by(|a, b| {
+            let tier_cmp = tier_weight(&a.tier).cmp(&tier_weight(&b.tier));
+            if tier_cmp != std::cmp::Ordering::Equal {
+                return tier_cmp;
+            }
+            get_mastery(&player_id, &a.champion_id).cmp(&get_mastery(&player_id, &b.champion_id))
+        });
+
+        let mut picks: Vec<String> = Vec::new();
+        for entry in sorted_meta {
+            if picks.len() >= 3 {
+                break;
+            }
+            let normalized = normalize_key(&entry.champion_id);
+            let mastery = get_mastery(&player_id, &entry.champion_id);
+            if mastery >= MASTERY_CAP {
+                continue;
+            }
+            if picks.iter().any(|p| normalize_key(p) == normalized) {
+                continue;
+            }
+            picks.push(entry.champion_id.clone());
+        }
+
+        if picks.len() < 3 {
+            let mut all_role_masteries: Vec<(String, u8)> = meta_entries
+                .iter()
+                .filter(|meta| {
+                    let champ_key = normalize_key(&meta.champion_id);
+                    normalize_key(&meta.role) == normalize_key(&role)
+                        && discovered.contains(&champ_key)
+                        && get_mastery(&player_id, &meta.champion_id) < MASTERY_CAP
+                })
+                .map(|meta| {
+                    (
+                        meta.champion_id.clone(),
+                        get_mastery(&player_id, &meta.champion_id),
+                    )
+                })
+                .collect();
+
+            all_role_masteries.sort_by_key(|(_, m)| *m);
+
+            for (champ_id, mastery) in all_role_masteries {
+                if picks.len() >= 3 {
+                    break;
+                }
+                if mastery >= MASTERY_CAP {
+                    continue;
+                }
+                let normalized = normalize_key(&champ_id);
+                if picks.iter().any(|p| normalize_key(p) == normalized) {
+                    continue;
+                }
+                picks.push(champ_id);
+            }
+        }
+
+        picks.resize(3, String::new());
+        results.push((player_id, picks));
+    }
+
+    let mut updated_count = 0;
+    for (player_id, targets) in &results {
+        let player = game.players.iter_mut().find(|p| p.id == *player_id).unwrap();
+        let old_targets = player.champion_training_targets.clone();
+        player.champion_training_targets = targets.clone();
+        player.champion_training_targets.resize(3, String::new());
+        player.champion_training_target = player
+            .champion_training_targets
+            .iter()
+            .find(|slot| !slot.trim().is_empty())
+            .cloned();
+
+        if old_targets != player.champion_training_targets {
+            updated_count += 1;
+        }
+    }
+
+    for (player_id, targets) in &results {
+        for champion in targets {
+            if !champion.trim().is_empty() {
+                let current = mastery_for_player_champion(game, player_id, champion);
+                upsert_mastery(game, player_id, champion, current.max(MIN_MASTERY));
+            }
+        }
+    }
+
+    Ok(updated_count)
+}
+
 pub fn mastery_for_player_champion(game: &Game, player_id: &str, champion_id: &str) -> u8 {
     game.champion_masteries
         .iter()
