@@ -16,7 +16,7 @@ use crate::transfers;
 use chrono::Datelike;
 use domain::league::{Fixture, FixtureCompetition, FixtureStatus, League, MatchResult};
 use domain::message::{InboxMessage, MessageCategory, MessageContext, MessagePriority};
-use domain::player::LolRole as DomainLolRole;
+use domain::player::Position as DomainPosition;
 use domain::stats::StatsState;
 use domain::team::{Team, TeamKind, TeamSeasonRecord};
 use log::{debug, info};
@@ -173,11 +173,18 @@ fn build_engine_team(game: &Game, team_id: &str) -> engine::TeamData {
         .iter()
         .filter(|p| p.team_id.as_deref() == Some(team_id))
         .map(|p| {
-            let role = domain_lol_role_to_engine(&p.natural_position);
+            let pos = match p.position.to_group_position() {
+                DomainPosition::Goalkeeper => engine::Position::Goalkeeper,
+                DomainPosition::Defender => engine::Position::Defender,
+                DomainPosition::Midfielder => engine::Position::Midfielder,
+                DomainPosition::Forward => engine::Position::Forward,
+                _ => engine::Position::Midfielder,
+            };
             engine::PlayerData {
                 id: p.id.clone(),
                 name: p.match_name.clone(),
-                role,
+                position: pos,
+                lol_role: Some(lol_role_from_position(&p.natural_position).to_string()),
                 condition: p.condition,
                 fitness: p.fitness,
                 pace: p.attributes.pace,
@@ -1131,25 +1138,23 @@ fn next_winter_playoff_pairings(
     None
 }
 
-fn domain_lol_role_to_engine(role: &DomainLolRole) -> engine::LolRole {
-    match role {
-        DomainLolRole::Top => engine::LolRole::Top,
-        DomainLolRole::Jungle => engine::LolRole::Jungle,
-        DomainLolRole::Mid => engine::LolRole::Mid,
-        DomainLolRole::Adc => engine::LolRole::Adc,
-        DomainLolRole::Support => engine::LolRole::Support,
-        DomainLolRole::Unknown => engine::LolRole::Mid,
-    }
-}
-
-fn lol_role_from_position(position: &DomainLolRole) -> &'static str {
+fn lol_role_from_position(position: &DomainPosition) -> &'static str {
     match position {
-        DomainLolRole::Top => "TOP",
-        DomainLolRole::Jungle => "JUNGLE",
-        DomainLolRole::Mid => "MID",
-        DomainLolRole::Adc => "ADC",
-        DomainLolRole::Support => "SUPPORT",
-        DomainLolRole::Unknown => "MID",
+        DomainPosition::Defender
+        | DomainPosition::RightBack
+        | DomainPosition::CenterBack
+        | DomainPosition::LeftBack
+        | DomainPosition::RightWingBack
+        | DomainPosition::LeftWingBack => "TOP",
+        DomainPosition::AttackingMidfielder
+        | DomainPosition::RightMidfielder
+        | DomainPosition::LeftMidfielder => "MID",
+        DomainPosition::Forward
+        | DomainPosition::RightWinger
+        | DomainPosition::LeftWinger
+        | DomainPosition::Striker => "ADC",
+        DomainPosition::Goalkeeper | DomainPosition::DefensiveMidfielder => "SUPPORT",
+        DomainPosition::Midfielder | DomainPosition::CentralMidfielder => "JUNGLE",
     }
 }
 

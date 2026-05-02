@@ -15,8 +15,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2002-01-01",
     nationality: "GB",
-    position: "ADC",
-    natural_position: "ADC",
+    position: "Forward",
+    natural_position: "Forward",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -103,16 +103,16 @@ describe("trainingGroupsModel", () => {
 
   it("sorts the roster by position order and then by name", () => {
     const roster = [
-      createPlayer({ id: "fwd", match_name: "Zane", position: "ADC", natural_position: "ADC" }),
-      createPlayer({ id: "def", match_name: "Adam", position: "TOP", natural_position: "TOP" }),
-      createPlayer({ id: "MID", match_name: "Ben", position: "MID", natural_position: "MID" }),
-      createPlayer({ id: "gk", match_name: "Chris", position: "SUPPORT", natural_position: "SUPPORT" }),
+      createPlayer({ id: "fwd", match_name: "Zane", position: "Forward", natural_position: "Forward" }),
+      createPlayer({ id: "def", match_name: "Adam", position: "Defender", natural_position: "Defender" }),
+      createPlayer({ id: "mid", match_name: "Ben", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "gk", match_name: "Chris", position: "Goalkeeper", natural_position: "Goalkeeper" }),
     ];
 
     expect(sortTrainingRoster(roster).map((player) => player.id)).toEqual([
       "gk",
       "def",
-      "MID",
+      "mid",
       "fwd",
     ]);
   });

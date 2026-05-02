@@ -46,16 +46,12 @@ pub fn advance_time_with_mode(
     state: State<'_, StateManager>,
     mode: String,
 ) -> Result<AdvanceTimeWithModeResponse, String> {
-    crate::error_reporter::track("advance_time_with_mode", (|| {
-        advance_time_with_mode_internal(&state, &mode)
-    })())
+    advance_time_with_mode_internal(&state, &mode)
 }
 
 #[tauri::command]
 pub fn advance_time(state: State<'_, StateManager>) -> Result<Game, String> {
-    crate::error_reporter::track("advance_time", (|| {
-        advance_time_internal(&state)
-    })())
+    advance_time_internal(&state)
 }
 
 pub fn compute_blocking_actions(game: &Game) -> Vec<serde_json::Value> {
@@ -64,120 +60,116 @@ pub fn compute_blocking_actions(game: &Game) -> Vec<serde_json::Value> {
 
 #[tauri::command]
 pub fn check_blocking_actions(state: State<'_, StateManager>) -> Result<serde_json::Value, String> {
-    crate::error_reporter::track("check_blocking_actions", (|| {
-        log::debug!("[cmd] check_blocking_actions");
-        let game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session")?;
+    log::debug!("[cmd] check_blocking_actions");
+    let game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session")?;
 
-        let blockers = compute_blocking_actions(&game);
-        info!(
-            "[cmd] check_blocking_actions: date={}, blocker_count={}",
-            game.clock.current_date.format("%Y-%m-%d"),
-            blockers.len()
-        );
-        Ok(serde_json::json!(blockers))
-    })())
+    let blockers = compute_blocking_actions(&game);
+    info!(
+        "[cmd] check_blocking_actions: date={}, blocker_count={}",
+        game.clock.current_date.format("%Y-%m-%d"),
+        blockers.len()
+    );
+    Ok(serde_json::json!(blockers))
 }
 
 #[tauri::command]
 pub fn skip_to_match_day(state: State<'_, StateManager>) -> Result<serde_json::Value, String> {
-    crate::error_reporter::track("skip_to_match_day", (|| {
-        info!("[cmd] skip_to_match_day");
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session")?;
+    info!("[cmd] skip_to_match_day");
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session")?;
 
-        // Precondition: manager must be employed at entry — guarantees that any later
-        // `team_id.is_none()` inside the loop is a real firing transition, not a stale state.
-        let user_team_id = game.manager.team_id.clone().ok_or("No team assigned")?;
-        info!(
-            "[cmd] skip_to_match_day: start_date={}, user_team_id={}",
-            game.clock.current_date.format("%Y-%m-%d"),
-            user_team_id
-        );
+    // Precondition: manager must be employed at entry — guarantees that any later
+    // `team_id.is_none()` inside the loop is a real firing transition, not a stale state.
+    let user_team_id = game.manager.team_id.clone().ok_or("No team assigned")?;
+    info!(
+        "[cmd] skip_to_match_day: start_date={}, user_team_id={}",
+        game.clock.current_date.format("%Y-%m-%d"),
+        user_team_id
+    );
 
-        let mut days_skipped = 0u32;
-        loop {
-            if days_skipped >= 60 {
-                break;
-            }
-
-            let today = game.clock.current_date.format("%Y-%m-%d").to_string();
-
-            let has_match = game.league.as_ref().is_some_and(|league| {
-                league.fixtures.iter().any(|fixture| {
-                    fixture.date == today
-                        && fixture.status == domain::league::FixtureStatus::Scheduled
-                        && (fixture.home_team_id == user_team_id
-                            || fixture.away_team_id == user_team_id)
-                })
-            });
-
-            if has_match {
-                info!(
-                    "[cmd] skip_to_match_day: found match_day={}, days_skipped={}",
-                    today, days_skipped
-                );
-                break;
-            }
-
-            let mut captures = Vec::new();
-            ofm_core::turn::process_day_with_capture(&mut game, &mut |capture| {
-                captures.push(capture);
-            });
-            for capture in captures {
-                state.append_stats_state(capture);
-            }
-            days_skipped += 1;
-
-            // Detect a firing that happened *during* this skip. Because the function
-            // errors out above when the manager starts unemployed, seeing `team_id.is_none()`
-            // here can only mean a real employed → unemployed transition.
-            if game.manager.team_id.is_none() {
-                info!(
-                    "[cmd] skip_to_match_day: manager fired after {} days",
-                    days_skipped
-                );
-                state.set_game(game.clone());
-                return Ok(serde_json::json!({
-                    "action": "fired",
-                    "game": game,
-                    "days_skipped": days_skipped
-                }));
-            }
-
-            // After processing, check if blocking actions arose
-            let blockers = compute_blocking_actions(&game);
-            if !blockers.is_empty() {
-                info!(
-                    "[cmd] skip_to_match_day: blocked_after_days={}, date={}, blocker_count={}",
-                    days_skipped,
-                    game.clock.current_date.format("%Y-%m-%d"),
-                    blockers.len()
-                );
-                state.set_game(game.clone());
-                return Ok(serde_json::json!({
-                    "action": "blocked",
-                    "game": game,
-                    "blockers": blockers,
-                    "days_skipped": days_skipped
-                }));
-            }
+    let mut days_skipped = 0u32;
+    loop {
+        if days_skipped >= 60 {
+            break;
         }
 
-        info!(
-            "[cmd] skip_to_match_day: arrived_after_days={}, final_date={}",
-            days_skipped,
-            game.clock.current_date.format("%Y-%m-%d")
-        );
-        state.set_game(game.clone());
-        Ok(serde_json::json!({
-            "action": "arrived",
-            "game": game,
-            "days_skipped": days_skipped
-        }))
-    })())
+        let today = game.clock.current_date.format("%Y-%m-%d").to_string();
+
+        let has_match = game.league.as_ref().is_some_and(|league| {
+            league.fixtures.iter().any(|fixture| {
+                fixture.date == today
+                    && fixture.status == domain::league::FixtureStatus::Scheduled
+                    && (fixture.home_team_id == user_team_id
+                        || fixture.away_team_id == user_team_id)
+            })
+        });
+
+        if has_match {
+            info!(
+                "[cmd] skip_to_match_day: found match_day={}, days_skipped={}",
+                today, days_skipped
+            );
+            break;
+        }
+
+        let mut captures = Vec::new();
+        ofm_core::turn::process_day_with_capture(&mut game, &mut |capture| {
+            captures.push(capture);
+        });
+        for capture in captures {
+            state.append_stats_state(capture);
+        }
+        days_skipped += 1;
+
+        // Detect a firing that happened *during* this skip. Because the function
+        // errors out above when the manager starts unemployed, seeing `team_id.is_none()`
+        // here can only mean a real employed → unemployed transition.
+        if game.manager.team_id.is_none() {
+            info!(
+                "[cmd] skip_to_match_day: manager fired after {} days",
+                days_skipped
+            );
+            state.set_game(game.clone());
+            return Ok(serde_json::json!({
+                "action": "fired",
+                "game": game,
+                "days_skipped": days_skipped
+            }));
+        }
+
+        // After processing, check if blocking actions arose
+        let blockers = compute_blocking_actions(&game);
+        if !blockers.is_empty() {
+            info!(
+                "[cmd] skip_to_match_day: blocked_after_days={}, date={}, blocker_count={}",
+                days_skipped,
+                game.clock.current_date.format("%Y-%m-%d"),
+                blockers.len()
+            );
+            state.set_game(game.clone());
+            return Ok(serde_json::json!({
+                "action": "blocked",
+                "game": game,
+                "blockers": blockers,
+                "days_skipped": days_skipped
+            }));
+        }
+    }
+
+    info!(
+        "[cmd] skip_to_match_day: arrived_after_days={}, final_date={}",
+        days_skipped,
+        game.clock.current_date.format("%Y-%m-%d")
+    );
+    state.set_game(game.clone());
+    Ok(serde_json::json!({
+        "action": "arrived",
+        "game": game,
+        "days_skipped": days_skipped
+    }))
 }
 
 #[cfg(test)]

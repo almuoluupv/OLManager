@@ -19,8 +19,8 @@ const makePlayer = (overrides: Partial<PlayerData> = {}): PlayerData => ({
   full_name: "Test Player Full",
   date_of_birth: "1996-01-15",
   nationality: "GB",
-  position: "MID",
-  natural_position: "MID",
+  position: "Midfielder",
+  natural_position: "Midfielder",
   alternate_positions: [],
   training_focus: null,
   attributes: {
@@ -137,19 +137,19 @@ describe("getSetPieceStats", () => {
 // ---------------------------------------------------------------------------
 
 const players = [
-  { id: "p1", name: "John Smith", position: "MID" },
-  { id: "p2", name: "Jane Doe", position: "ADC" },
-  { id: "gk", name: "Keeper", position: "SUPPORT" },
+  { id: "p1", name: "John Smith", position: "Midfielder" },
+  { id: "p2", name: "Jane Doe", position: "Forward" },
+  { id: "gk", name: "Keeper", position: "Goalkeeper" },
 ];
 
 const allSquad = [
-  makePlayer({ id: "p1", position: "MID" }),
+  makePlayer({ id: "p1", position: "Midfielder" }),
   makePlayer({
     id: "p2",
-    position: "ADC",
+    position: "Forward",
     attributes: { ...makePlayer().attributes, shooting: 90 },
   }),
-  makePlayer({ id: "gk", position: "SUPPORT" }),
+  makePlayer({ id: "gk", position: "Goalkeeper" }),
 ];
 
 describe("SetPieceSelector component", () => {
@@ -193,9 +193,9 @@ describe("SetPieceSelector component", () => {
         role="penalty"
         currentId={null}
         players={[
-          { id: "cb", name: "Center Back Player", position: "TOP" },
+          { id: "cb", name: "Center Back Player", position: "Center Back" },
         ]}
-        allSquad={[makePlayer({ id: "cb", position: "TOP" })]}
+        allSquad={[makePlayer({ id: "cb", position: "Center Back" })]}
         onSelect={() => {}}
       />,
     );

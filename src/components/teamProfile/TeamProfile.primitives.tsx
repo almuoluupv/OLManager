@@ -49,7 +49,7 @@ export function StatBox({
   highlight,
 }: {
   label: string;
-  value: number | string;
+  value: number;
   highlight?: boolean;
 }) {
   return (

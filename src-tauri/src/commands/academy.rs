@@ -40,20 +40,18 @@ pub fn get_academy_acquisition_options(
     state: State<'_, StateManager>,
     parent_team_id: String,
 ) -> Result<AcademyAcquisitionOptionsResponse, String> {
-    crate::error_reporter::track("get_academy_acquisition_options", (|| {
-        info!(
-            "[cmd] get_academy_acquisition_options: parent_team_id={}",
-            parent_team_id
-        );
-        let mut game = state
-            .get_game(|game| game.clone())
-            .ok_or("No active game session".to_string())?;
+    info!(
+        "[cmd] get_academy_acquisition_options: parent_team_id={}",
+        parent_team_id
+    );
+    let mut game = state
+        .get_game(|game| game.clone())
+        .ok_or("No active game session".to_string())?;
 
-        ensure_example_academy_pool(&mut game);
-        state.set_game(game.clone());
+    ensure_example_academy_pool(&mut game);
+    state.set_game(game.clone());
 
-        get_academy_acquisition_options_for_game(&game, &parent_team_id)
-    })())
+    get_academy_acquisition_options_for_game(&game, &parent_team_id)
 }
 
 #[tauri::command]
@@ -61,19 +59,17 @@ pub fn acquire_academy_team(
     state: State<'_, StateManager>,
     request: AcquireAcademyTeamRequest,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("acquire_academy_team", (|| {
-        info!(
-            "[cmd] acquire_academy_team: parent_team_id={}, source_team_id={}",
-            request.parent_team_id, request.source_team_id
-        );
-        let mut game = state
-            .get_game(|game| game.clone())
-            .ok_or("No active game session".to_string())?;
-        ensure_example_academy_pool(&mut game);
-        let updated = acquire_academy_team_in_game(&mut game, request)?;
-        state.set_game(updated.clone());
-        Ok(updated)
-    })())
+    info!(
+        "[cmd] acquire_academy_team: parent_team_id={}, source_team_id={}",
+        request.parent_team_id, request.source_team_id
+    );
+    let mut game = state
+        .get_game(|game| game.clone())
+        .ok_or("No active game session".to_string())?;
+    ensure_example_academy_pool(&mut game);
+    let updated = acquire_academy_team_in_game(&mut game, request)?;
+    state.set_game(updated.clone());
+    Ok(updated)
 }
 
 #[tauri::command]
@@ -81,48 +77,46 @@ pub fn promote_academy_player(
     state: State<'_, StateManager>,
     player_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("promote_academy_player", (|| {
-        info!("[cmd] promote_academy_player: player_id={}", player_id);
-        let mut game = state
-            .get_game(|game| game.clone())
-            .ok_or("No active game session".to_string())?;
+    info!("[cmd] promote_academy_player: player_id={}", player_id);
+    let mut game = state
+        .get_game(|game| game.clone())
+        .ok_or("No active game session".to_string())?;
 
-        let parent_team_id = game
-            .manager
-            .team_id
-            .clone()
-            .ok_or("No team assigned".to_string())?;
+    let parent_team_id = game
+        .manager
+        .team_id
+        .clone()
+        .ok_or("No team assigned".to_string())?;
 
-        let academy_team_id = resolve_manager_academy_team_id(&game, &parent_team_id)?;
+    let academy_team_id = resolve_manager_academy_team_id(&game, &parent_team_id)?;
 
-        let (moved_player_id, moved_player_name) = {
-            let player = game
-                .players
-                .iter_mut()
-                .find(|candidate| candidate.id == player_id)
-                .ok_or_else(|| format!("Player '{}' not found", player_id))?;
+    let (moved_player_id, moved_player_name) = {
+        let player = game
+            .players
+            .iter_mut()
+            .find(|candidate| candidate.id == player_id)
+            .ok_or_else(|| format!("Player '{}' not found", player_id))?;
 
-            if player.team_id.as_deref() != Some(academy_team_id.as_str()) {
-                return Err("Player does not belong to your academy team".to_string());
-            }
+        if player.team_id.as_deref() != Some(academy_team_id.as_str()) {
+            return Err("Player does not belong to your academy team".to_string());
+        }
 
-            player.team_id = Some(parent_team_id.clone());
-            (player.id.clone(), player.match_name.clone())
-        };
+        player.team_id = Some(parent_team_id.clone());
+        (player.id.clone(), player.match_name.clone())
+    };
 
-        push_academy_player_moved_message(
-            &mut game,
-            "academy-promote",
-            &parent_team_id,
-            &moved_player_id,
-            &moved_player_name,
-            "Promocion desde la academia",
-            "Subiste al jugador {player} desde la academia al equipo principal.",
-        );
+    push_academy_player_moved_message(
+        &mut game,
+        "academy-promote",
+        &parent_team_id,
+        &moved_player_id,
+        &moved_player_name,
+        "Promocion desde la academia",
+        "Subiste al jugador {player} desde la academia al equipo principal.",
+    );
 
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 #[tauri::command]
@@ -130,51 +124,49 @@ pub fn demote_main_player_to_academy(
     state: State<'_, StateManager>,
     player_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("demote_main_player_to_academy", (|| {
-        info!(
-            "[cmd] demote_main_player_to_academy: player_id={}",
-            player_id
-        );
-        let mut game = state
-            .get_game(|game| game.clone())
-            .ok_or("No active game session".to_string())?;
+    info!(
+        "[cmd] demote_main_player_to_academy: player_id={}",
+        player_id
+    );
+    let mut game = state
+        .get_game(|game| game.clone())
+        .ok_or("No active game session".to_string())?;
 
-        let parent_team_id = game
-            .manager
-            .team_id
-            .clone()
-            .ok_or("No team assigned".to_string())?;
+    let parent_team_id = game
+        .manager
+        .team_id
+        .clone()
+        .ok_or("No team assigned".to_string())?;
 
-        let academy_team_id = resolve_manager_academy_team_id(&game, &parent_team_id)?;
+    let academy_team_id = resolve_manager_academy_team_id(&game, &parent_team_id)?;
 
-        let (moved_player_id, moved_player_name) = {
-            let player = game
-                .players
-                .iter_mut()
-                .find(|candidate| candidate.id == player_id)
-                .ok_or_else(|| format!("Player '{}' not found", player_id))?;
+    let (moved_player_id, moved_player_name) = {
+        let player = game
+            .players
+            .iter_mut()
+            .find(|candidate| candidate.id == player_id)
+            .ok_or_else(|| format!("Player '{}' not found", player_id))?;
 
-            if player.team_id.as_deref() != Some(parent_team_id.as_str()) {
-                return Err("Player does not belong to your main team".to_string());
-            }
+        if player.team_id.as_deref() != Some(parent_team_id.as_str()) {
+            return Err("Player does not belong to your main team".to_string());
+        }
 
-            player.team_id = Some(academy_team_id.clone());
-            (player.id.clone(), player.match_name.clone())
-        };
+        player.team_id = Some(academy_team_id.clone());
+        (player.id.clone(), player.match_name.clone())
+    };
 
-        push_academy_player_moved_message(
-            &mut game,
-            "academy-demote",
-            &parent_team_id,
-            &moved_player_id,
-            &moved_player_name,
-            "Jugador enviado a la academia",
-            "Bajaste al jugador {player} del equipo principal a la academia.",
-        );
+    push_academy_player_moved_message(
+        &mut game,
+        "academy-demote",
+        &parent_team_id,
+        &moved_player_id,
+        &moved_player_name,
+        "Jugador enviado a la academia",
+        "Bajaste al jugador {player} del equipo principal a la academia.",
+    );
 
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 #[tauri::command]
@@ -182,17 +174,15 @@ pub fn get_academy_creation_options(
     state: State<'_, StateManager>,
     parent_team_id: String,
 ) -> Result<AcademyCreationOptionsResponse, String> {
-    crate::error_reporter::track("get_academy_creation_options", (|| {
-        info!(
-            "[cmd] get_academy_creation_options: parent_team_id={}",
-            parent_team_id
-        );
-        let game = state
-            .get_game(|game| game.clone())
-            .ok_or("No active game session".to_string())?;
+    info!(
+        "[cmd] get_academy_creation_options: parent_team_id={}",
+        parent_team_id
+    );
+    let game = state
+        .get_game(|game| game.clone())
+        .ok_or("No active game session".to_string())?;
 
-        get_academy_acquisition_options_for_game(&game, &parent_team_id)
-    })())
+    get_academy_acquisition_options_for_game(&game, &parent_team_id)
 }
 
 #[tauri::command]
@@ -201,16 +191,14 @@ pub fn create_academy(
     parent_team_id: String,
     erl_league_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("create_academy", (|| {
-        info!(
-            "[cmd] create_academy: parent_team_id={}, erl_league_id={}",
-            parent_team_id, erl_league_id
-        );
-        Err(format!(
-            "create_academy is deprecated; use acquire_academy_team with a source team candidate instead of ERL '{}'.",
-            erl_league_id
-        ))
-    })())
+    info!(
+        "[cmd] create_academy: parent_team_id={}, erl_league_id={}",
+        parent_team_id, erl_league_id
+    );
+    Err(format!(
+        "create_academy is deprecated; use acquire_academy_team with a source team candidate instead of ERL '{}'.",
+        erl_league_id
+    ))
 }
 
 pub(crate) fn get_academy_acquisition_options_for_game(

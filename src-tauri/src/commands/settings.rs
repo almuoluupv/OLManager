@@ -68,74 +68,36 @@ fn settings_path(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, St
 
 #[tauri::command]
 pub fn get_settings(app_handle: tauri::AppHandle) -> Result<AppSettings, String> {
-    crate::error_reporter::track("get_settings", (|| {
-        log::debug!("[cmd] get_settings");
-        let path = settings_path(&app_handle)?;
-        if !path.exists() {
-            return Ok(AppSettings::default());
-        }
-        let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-        serde_json::from_str(&json).map_err(|e| format!("Failed to parse settings: {}", e))
-    })())
+    log::debug!("[cmd] get_settings");
+    let path = settings_path(&app_handle)?;
+    if !path.exists() {
+        return Ok(AppSettings::default());
+    }
+    let json = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&json).map_err(|e| format!("Failed to parse settings: {}", e))
 }
 
 #[tauri::command]
 pub fn save_settings(app_handle: tauri::AppHandle, settings: AppSettings) -> Result<(), String> {
-    crate::error_reporter::track("save_settings", (|| {
-        info!(
-            "[cmd] save_settings: theme={}, lang={}",
-            settings.theme, settings.language
-        );
-        let path = settings_path(&app_handle)?;
-        let json = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
-        std::fs::write(&path, json).map_err(|e| format!("Failed to save settings: {}", e))
-    })())
+    info!(
+        "[cmd] save_settings: theme={}, lang={}",
+        settings.theme, settings.language
+    );
+    let path = settings_path(&app_handle)?;
+    let json = serde_json::to_string_pretty(&settings).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| format!("Failed to save settings: {}", e))
 }
 
 #[tauri::command]
 pub fn clear_all_saves(sm_state: tauri::State<crate::SaveManagerState>) -> Result<(), String> {
-    crate::error_reporter::track("clear_all_saves", (|| {
-        log::warn!("[cmd] clear_all_saves: deleting all save data!");
-        let mut sm = sm_state
-            .0
-            .lock()
-            .map_err(|e| format!("Lock error: {}", e))?;
-        let save_ids: Vec<String> = sm.list_saves().iter().map(|s| s.id.clone()).collect();
-        for id in save_ids {
-            sm.delete_save(&id)?;
-        }
-        Ok(())
-    })())
-}
-
-#[tauri::command]
-pub fn test_error_webhook(webhook_url: String) -> Result<String, String> {
-    info!("[cmd] test_error_webhook");
-    if webhook_url.is_empty() {
-        return Err("Webhook URL is empty".to_string());
+    log::warn!("[cmd] clear_all_saves: deleting all save data!");
+    let mut sm = sm_state
+        .0
+        .lock()
+        .map_err(|e| format!("Lock error: {}", e))?;
+    let save_ids: Vec<String> = sm.list_saves().iter().map(|s| s.id.clone()).collect();
+    for id in save_ids {
+        sm.delete_save(&id)?;
     }
-
-    let client = reqwest::blocking::Client::new();
-    let payload = serde_json::json!({
-        "embeds": [{
-            "title": "Webhook Test",
-            "description": "This is a test message from OLM. Error reporting is working!",
-            "color": 0x00FF00,
-            "footer": { "text": "OLM Error Reporter" }
-        }]
-    });
-
-    client
-        .post(&webhook_url)
-        .header("Content-Type", "application/json")
-        .json(&payload)
-        .send()
-        .map_err(|e| format!("Failed to send: {}", e))
-        .and_then(|resp| {
-            if resp.status().is_success() {
-                Ok("Test message sent successfully".to_string())
-            } else {
-                Err(format!("Discord returned: {}", resp.status()))
-            }
-        })
+    Ok(())
 }

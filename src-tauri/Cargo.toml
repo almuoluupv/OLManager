@@ -34,4 +34,3 @@ db = { path = "crates/db" }
 chrono = "0.4.44"
 rand = "0.10"
 base64 = "0.22"
-reqwest = { version = "0.12", features = ["json", "blocking", "multipart"] }

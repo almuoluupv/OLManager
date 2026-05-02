@@ -50,8 +50,8 @@ function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
     full_name: "John Smith",
     date_of_birth: "2000-01-01",
     nationality: "BR",
-    position: "ADC",
-    natural_position: "ADC",
+    position: "Forward",
+    natural_position: "Forward",
     alternate_positions: [],
     training_focus: null,
     attributes: {
@@ -348,17 +348,17 @@ describe("dashboardHelpers", function (): void {
 
   it("does not warn about an incomplete Starting XI when a healthy roster can normalize a partial saved lineup", function (): void {
     const roster = [
-      createPlayer({ id: "p1", position: "SUPPORT", natural_position: "SUPPORT" }),
-      createPlayer({ id: "p2", position: "TOP", natural_position: "TOP" }),
-      createPlayer({ id: "p3", position: "TOP", natural_position: "TOP" }),
-      createPlayer({ id: "p4", position: "TOP", natural_position: "TOP" }),
-      createPlayer({ id: "p5", position: "TOP", natural_position: "TOP" }),
-      createPlayer({ id: "p6", position: "MID", natural_position: "MID" }),
-      createPlayer({ id: "p7", position: "MID", natural_position: "MID" }),
-      createPlayer({ id: "p8", position: "MID", natural_position: "MID" }),
-      createPlayer({ id: "p9", position: "MID", natural_position: "MID" }),
-      createPlayer({ id: "p10", position: "ADC", natural_position: "ADC" }),
-      createPlayer({ id: "p11", position: "ADC", natural_position: "ADC" }),
+      createPlayer({ id: "p1", position: "Goalkeeper", natural_position: "Goalkeeper" }),
+      createPlayer({ id: "p2", position: "Defender", natural_position: "Defender" }),
+      createPlayer({ id: "p3", position: "Defender", natural_position: "Defender" }),
+      createPlayer({ id: "p4", position: "Defender", natural_position: "Defender" }),
+      createPlayer({ id: "p5", position: "Defender", natural_position: "Defender" }),
+      createPlayer({ id: "p6", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "p7", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "p8", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "p9", position: "Midfielder", natural_position: "Midfielder" }),
+      createPlayer({ id: "p10", position: "Forward", natural_position: "Forward" }),
+      createPlayer({ id: "p11", position: "Forward", natural_position: "Forward" }),
     ];
     const team = createTeam({
       starting_xi_ids: ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"],

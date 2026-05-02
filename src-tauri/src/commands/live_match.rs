@@ -108,9 +108,7 @@ pub fn start_live_match(
     mode: String,
     allows_extra_time: bool,
 ) -> Result<engine::MatchSnapshot, String> {
-    crate::error_reporter::track("start_live_match", (|| {
-        start_live_match_service(&state, fixture_index, &mode, allows_extra_time)
-    })())
+    start_live_match_service(&state, fixture_index, &mode, allows_extra_time)
 }
 
 /// Step the live match forward by N minutes. Returns the events from each minute.
@@ -119,9 +117,7 @@ pub fn step_live_match(
     state: State<'_, StateManager>,
     minutes: u16,
 ) -> Result<Vec<engine::MinuteResult>, String> {
-    crate::error_reporter::track("step_live_match", (|| {
-        step_live_match_service(&state, minutes)
-    })())
+    step_live_match_service(&state, minutes)
 }
 
 /// Apply a match command (substitution, tactic change, set piece taker, etc.)
@@ -130,17 +126,13 @@ pub fn apply_match_command(
     state: State<'_, StateManager>,
     command: engine::MatchCommand,
 ) -> Result<engine::MatchSnapshot, String> {
-    crate::error_reporter::track("apply_match_command", (|| {
-        apply_match_command_service(&state, command)
-    })())
+    apply_match_command_service(&state, command)
 }
 
 /// Get current match snapshot without advancing time.
 #[tauri::command]
 pub fn get_match_snapshot(state: State<'_, StateManager>) -> Result<engine::MatchSnapshot, String> {
-    crate::error_reporter::track("get_match_snapshot", (|| {
-        get_match_snapshot_service(&state)
-    })())
+    get_match_snapshot_service(&state)
 }
 
 /// Finish the live match: generate report, update game state, clean up.
@@ -149,9 +141,7 @@ pub fn finish_live_match(
     state: State<'_, StateManager>,
     lol_report: Option<LolSimMatchReportInput>,
 ) -> Result<FinishLiveMatchResponse, String> {
-    crate::error_reporter::track("finish_live_match", (|| {
-        finish_live_match_internal(&state, lol_report)
-    })())
+    finish_live_match_internal(&state, lol_report)
 }
 
 #[tauri::command]
@@ -161,57 +151,55 @@ pub fn record_fixture_champion_picks(
     winner_team_id: String,
     picks: Vec<FixtureChampionPickInput>,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("record_fixture_champion_picks", (|| {
-        info!(
-            "[cmd] record_fixture_champion_picks: fixture={}, picks={}",
-            fixture_id,
-            picks.len()
-        );
+    info!(
+        "[cmd] record_fixture_champion_picks: fixture={}, picks={}",
+        fixture_id,
+        picks.len()
+    );
 
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
 
-        let league = game
-            .league
-            .as_mut()
-            .ok_or("No active league in game state".to_string())?;
-        let fixture = league
-            .fixtures
+    let league = game
+        .league
+        .as_mut()
+        .ok_or("No active league in game state".to_string())?;
+    let fixture = league
+        .fixtures
+        .iter_mut()
+        .find(|candidate| candidate.id == fixture_id)
+        .ok_or_else(|| format!("Fixture not found: {}", fixture_id))?;
+    if fixture.result.is_none() {
+        return Err("Fixture has no completed result yet".to_string());
+    }
+
+    state.with_stats_state(|stats| {
+        for record in stats
+            .player_matches
             .iter_mut()
-            .find(|candidate| candidate.id == fixture_id)
-            .ok_or_else(|| format!("Fixture not found: {}", fixture_id))?;
-        if fixture.result.is_none() {
-            return Err("Fixture has no completed result yet".to_string());
+            .filter(|record| record.fixture_id == fixture_id)
+        {
+            record.champion = picks
+                .iter()
+                .find(|pick| pick.player_id == record.player_id)
+                .map(|pick| pick.champion_id.clone());
+            record.result = if record.team_id == winner_team_id {
+                MatchOutcome::Win
+            } else {
+                MatchOutcome::Loss
+            };
         }
+    });
 
-        state.with_stats_state(|stats| {
-            for record in stats
-                .player_matches
-                .iter_mut()
-                .filter(|record| record.fixture_id == fixture_id)
-            {
-                record.champion = picks
-                    .iter()
-                    .find(|pick| pick.player_id == record.player_id)
-                    .map(|pick| pick.champion_id.clone());
-                record.result = if record.team_id == winner_team_id {
-                    MatchOutcome::Win
-                } else {
-                    MatchOutcome::Loss
-                };
-            }
-        });
+    let mastery_picks: Vec<(String, String)> = picks
+        .iter()
+        .map(|pick| (pick.player_id.clone(), pick.champion_id.clone()))
+        .collect();
+    ofm_core::champions::apply_match_mastery_progress(&mut game, &winner_team_id, &mastery_picks);
 
-        let mastery_picks: Vec<(String, String)> = picks
-            .iter()
-            .map(|pick| (pick.player_id.clone(), pick.champion_id.clone()))
-            .collect();
-        ofm_core::champions::apply_match_mastery_progress(&mut game, &winner_team_id, &mastery_picks);
-
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 #[tauri::command]
@@ -220,25 +208,23 @@ pub fn apply_champion_mastery_from_draft(
     winner_team_id: String,
     picks: Vec<FixtureChampionPickInput>,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("apply_champion_mastery_from_draft", (|| {
-        info!(
-            "[cmd] apply_champion_mastery_from_draft: picks={}",
-            picks.len()
-        );
+    info!(
+        "[cmd] apply_champion_mastery_from_draft: picks={}",
+        picks.len()
+    );
 
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
 
-        let mastery_picks: Vec<(String, String)> = picks
-            .iter()
-            .map(|pick| (pick.player_id.clone(), pick.champion_id.clone()))
-            .collect();
-        ofm_core::champions::apply_match_mastery_progress(&mut game, &winner_team_id, &mastery_picks);
+    let mastery_picks: Vec<(String, String)> = picks
+        .iter()
+        .map(|pick| (pick.player_id.clone(), pick.champion_id.clone()))
+        .collect();
+    ofm_core::champions::apply_match_mastery_progress(&mut game, &winner_team_id, &mastery_picks);
 
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 /// Apply a team talk and return per-player morale changes.
@@ -250,17 +236,15 @@ pub fn apply_team_talk(
     tone: String,
     context: String,
 ) -> Result<Vec<serde_json::Value>, String> {
-    crate::error_reporter::track("apply_team_talk", (|| {
-        info!("[cmd] apply_team_talk: tone={}, context={}", tone, context);
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session")?;
-        let seed = rand::rng().random::<u64>();
-        let results = apply_team_talk_internal(&mut game, &tone, &context, seed)?;
+    info!("[cmd] apply_team_talk: tone={}, context={}", tone, context);
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session")?;
+    let seed = rand::rng().random::<u64>();
+    let results = apply_team_talk_internal(&mut game, &tone, &context, seed)?;
 
-        state.set_game(game);
-        Ok(results)
-    })())
+    state.set_game(game);
+    Ok(results)
 }
 
 /// Process press conference answers: generate news article, affect squad morale.
@@ -278,164 +262,162 @@ pub fn submit_press_conference(
     prerendered_body: Option<String>,
     prerendered_headline: Option<String>,
 ) -> Result<serde_json::Value, String> {
-    crate::error_reporter::track("submit_press_conference", (|| {
-        info!(
-            "[cmd] submit_press_conference: {} {} - {} {}",
-            home_team, home_score, away_score, away_team
-        );
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session")?;
+    info!(
+        "[cmd] submit_press_conference: {} {} - {} {}",
+        home_team, home_score, away_score, away_team
+    );
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session")?;
 
-        let today = game.clock.current_date.format("%Y-%m-%d").to_string();
-        let mut rng = rand::rng();
+    let today = game.clock.current_date.format("%Y-%m-%d").to_string();
+    let mut rng = rand::rng();
 
-        // Build news article from press conference answers
-        let mut quotes: Vec<String> = Vec::new();
-        let mut morale_delta: i16 = 0;
-        let mut mentioned_player_ids: Vec<String> = Vec::new();
-        let has_stable_effects = answers.iter().any(|answer| {
-            answer
-                .get("effect_id")
-                .and_then(|value| value.as_str())
-                .is_some_and(|effect_id| !effect_id.is_empty())
-        });
+    // Build news article from press conference answers
+    let mut quotes: Vec<String> = Vec::new();
+    let mut morale_delta: i16 = 0;
+    let mut mentioned_player_ids: Vec<String> = Vec::new();
+    let has_stable_effects = answers.iter().any(|answer| {
+        answer
+            .get("effect_id")
+            .and_then(|value| value.as_str())
+            .is_some_and(|effect_id| !effect_id.is_empty())
+    });
 
-        for answer in &answers {
-            let tone = answer
-                .get("response_tone")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            let text = answer
-                .get("response_text")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            let qid = answer
-                .get("question_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+    for answer in &answers {
+        let tone = answer
+            .get("response_tone")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let text = answer
+            .get("response_text")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let qid = answer
+            .get("question_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
 
-            if !text.is_empty() {
-                quotes.push(format!("\"{}\"", text));
+        if !text.is_empty() {
+            quotes.push(format!("\"{}\"", text));
+        }
+
+        // Track player mentions
+        if let Some(pid) = answer.get("player_id").and_then(|v| v.as_str()) {
+            if !pid.is_empty() {
+                mentioned_player_ids.push(pid.to_string());
             }
+        }
 
-            // Track player mentions
+        if !has_stable_effects {
+            // Legacy morale effects based on localized tone. Kept only for old payloads.
+            match tone {
+                "Humble" | "Fair" | "Positive" | "Focused" => {
+                    morale_delta += rng.random_range(1..=3)
+                }
+                "Confident" | "Ambitious" => morale_delta += rng.random_range(2..=5),
+                "Defiant" | "Frustrated" => morale_delta += rng.random_range(-2..=2),
+                "Curt" | "Evasive" => morale_delta += rng.random_range(-3..=0),
+                "Accept" | "Detailed" => morale_delta += rng.random_range(0..=2),
+                "Deflect" => morale_delta += rng.random_range(-1..=1),
+                "Praise" => morale_delta += rng.random_range(3..=6),
+                "Demanding" => morale_delta += rng.random_range(-2..=3),
+                _ => {}
+            }
+        }
+
+        // Legacy player-focused question effects.
+        if !has_stable_effects && qid == "player_focus" {
             if let Some(pid) = answer.get("player_id").and_then(|v| v.as_str()) {
                 if !pid.is_empty() {
-                    mentioned_player_ids.push(pid.to_string());
-                }
-            }
-
-            if !has_stable_effects {
-                // Legacy morale effects based on localized tone. Kept only for old payloads.
-                match tone {
-                    "Humble" | "Fair" | "Positive" | "Focused" => {
-                        morale_delta += rng.random_range(1..=3)
-                    }
-                    "Confident" | "Ambitious" => morale_delta += rng.random_range(2..=5),
-                    "Defiant" | "Frustrated" => morale_delta += rng.random_range(-2..=2),
-                    "Curt" | "Evasive" => morale_delta += rng.random_range(-3..=0),
-                    "Accept" | "Detailed" => morale_delta += rng.random_range(0..=2),
-                    "Deflect" => morale_delta += rng.random_range(-1..=1),
-                    "Praise" => morale_delta += rng.random_range(3..=6),
-                    "Demanding" => morale_delta += rng.random_range(-2..=3),
-                    _ => {}
-                }
-            }
-
-            // Legacy player-focused question effects.
-            if !has_stable_effects && qid == "player_focus" {
-                if let Some(pid) = answer.get("player_id").and_then(|v| v.as_str()) {
-                    if !pid.is_empty() {
-                        let player_delta: i16 = match tone {
-                            "Praise" => rng.random_range(4..=8),
-                            "Demanding" => rng.random_range(-3..=4),
-                            "Deflect" => rng.random_range(-2..=1),
-                            _ => rng.random_range(0..=3),
-                        };
-                        if let Some(p) = game.players.iter_mut().find(|p| p.id == pid) {
-                            p.morale = ((p.morale as i16) + player_delta).clamp(10, 100) as u8;
-                        }
+                    let player_delta: i16 = match tone {
+                        "Praise" => rng.random_range(4..=8),
+                        "Demanding" => rng.random_range(-3..=4),
+                        "Deflect" => rng.random_range(-2..=1),
+                        _ => rng.random_range(0..=3),
+                    };
+                    if let Some(p) = game.players.iter_mut().find(|p| p.id == pid) {
+                        p.morale = ((p.morale as i16) + player_delta).clamp(10, 100) as u8;
                     }
                 }
             }
         }
+    }
 
-        if has_stable_effects {
-            morale_delta = apply_press_conference_effects(&mut game, &answers, &user_team_id);
+    if has_stable_effects {
+        morale_delta = apply_press_conference_effects(&mut game, &answers, &user_team_id);
+    } else {
+        // Apply legacy squad-wide morale effect
+        morale_delta = morale_delta.clamp(-8, 8);
+        if morale_delta != 0 {
+            for p in game.players.iter_mut() {
+                if p.team_id.as_deref() == Some(&user_team_id) {
+                    p.morale = apply_delta(p.morale, morale_delta);
+                }
+            }
+        }
+    }
+
+    // Generate news article
+    let result_str = format!(
+        "{} {} - {} {}",
+        home_team, home_score, away_score, away_team
+    );
+    let headline = prerendered_headline.unwrap_or_else(|| {
+        if quotes.is_empty() {
+            format!("Post-Match: {} on {}", user_team_name, result_str)
         } else {
-            // Apply legacy squad-wide morale effect
-            morale_delta = morale_delta.clamp(-8, 8);
-            if morale_delta != 0 {
-                for p in game.players.iter_mut() {
-                    if p.team_id.as_deref() == Some(&user_team_id) {
-                        p.morale = apply_delta(p.morale, morale_delta);
-                    }
-                }
-            }
+            let sources = [
+                format!("{} Manager: {}", user_team_name, quotes[0]),
+                format!(
+                    "Press Conference: \"{}\" — {} boss",
+                    quotes[0].trim_matches('"'),
+                    user_team_name
+                ),
+            ];
+            sources[rng.random_range(0..sources.len())].clone()
         }
+    });
 
-        // Generate news article
-        let result_str = format!(
-            "{} {} - {} {}",
-            home_team, home_score, away_score, away_team
-        );
-        let headline = prerendered_headline.unwrap_or_else(|| {
-            if quotes.is_empty() {
-                format!("Post-Match: {} on {}", user_team_name, result_str)
-            } else {
-                let sources = [
-                    format!("{} Manager: {}", user_team_name, quotes[0]),
-                    format!(
-                        "Press Conference: \"{}\" — {} boss",
-                        quotes[0].trim_matches('"'),
-                        user_team_name
-                    ),
-                ];
-                sources[rng.random_range(0..sources.len())].clone()
-            }
-        });
+    let body = prerendered_body.unwrap_or_else(|| {
+        if quotes.len() > 1 {
+            format!(
+                "Speaking after the {} result, the {} manager addressed the press.\n\n{}\n\n\
+                The conference covered the result, tactical approach, and what lies ahead for the team.",
+                result_str, user_team_name,
+                quotes.iter().map(|q| format!("• {}", q)).collect::<Vec<_>>().join("\n")
+            )
+        } else if quotes.len() == 1 {
+            format!(
+                "The {} manager spoke briefly after the {} result.\n\n{}",
+                user_team_name, result_str, quotes[0]
+            )
+        } else {
+            format!(
+                "The {} manager declined to speak at length after the {} result.",
+                user_team_name, result_str
+            )
+        }
+    });
 
-        let body = prerendered_body.unwrap_or_else(|| {
-            if quotes.len() > 1 {
-                format!(
-                    "Speaking after the {} result, the {} manager addressed the press.\n\n{}\n\n\
-                    The conference covered the result, tactical approach, and what lies ahead for the team.",
-                    result_str, user_team_name,
-                    quotes.iter().map(|q| format!("• {}", q)).collect::<Vec<_>>().join("\n")
-                )
-            } else if quotes.len() == 1 {
-                format!(
-                    "The {} manager spoke briefly after the {} result.\n\n{}",
-                    user_team_name, result_str, quotes[0]
-                )
-            } else {
-                format!(
-                    "The {} manager declined to speak at length after the {} result.",
-                    user_team_name, result_str
-                )
-            }
-        });
+    let article_id = format!("press_conf_{}", today);
+    let article = domain::news::NewsArticle::new(
+        article_id,
+        headline,
+        body,
+        "Sports Daily".to_string(),
+        today.clone(),
+        domain::news::NewsCategory::MatchReport,
+    )
+    .with_teams(vec![user_team_id.clone()]);
 
-        let article_id = format!("press_conf_{}", today);
-        let article = domain::news::NewsArticle::new(
-            article_id,
-            headline,
-            body,
-            "Sports Daily".to_string(),
-            today.clone(),
-            domain::news::NewsCategory::MatchReport,
-        )
-        .with_teams(vec![user_team_id.clone()]);
+    game.news.push(article);
+    state.set_game(game.clone());
 
-        game.news.push(article);
-        state.set_game(game.clone());
-
-        Ok(serde_json::json!({
-            "game": game,
-            "morale_delta": morale_delta
-        }))
-    })())
+    Ok(serde_json::json!({
+        "game": game,
+        "morale_delta": morale_delta
+    }))
 }
 
 #[cfg(test)]

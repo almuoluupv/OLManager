@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { TeamData } from "../../store/gameStore";
+import type { PlayerData, TeamData } from "../../store/gameStore";
 import {
     formatPlayerMarketValue,
     formatPlayerWage,
@@ -40,6 +40,71 @@ function createTeam(overrides: Partial<TeamData> = {}): TeamData {
     };
 }
 
+function createPlayer(overrides: Partial<PlayerData> = {}): PlayerData {
+    return {
+        id: "player-1",
+        match_name: "J. Smith",
+        full_name: "John Smith",
+        date_of_birth: "2000-01-01",
+        nationality: "GB",
+        position: "Forward",
+        natural_position: "Forward",
+        alternate_positions: [],
+        training_focus: null,
+        attributes: {
+            pace: 60,
+            stamina: 60,
+            strength: 60,
+            agility: 60,
+            passing: 60,
+            shooting: 60,
+            tackling: 60,
+            dribbling: 60,
+            defending: 60,
+            positioning: 60,
+            vision: 60,
+            decisions: 60,
+            composure: 60,
+            aggression: 60,
+            teamwork: 60,
+            leadership: 60,
+            handling: 20,
+            reflexes: 20,
+            aerial: 60,
+        },
+        condition: 80,
+        morale: 75,
+        injury: null,
+        team_id: "team-1",
+        contract_end: "2026-10-15",
+        wage: 12000,
+        market_value: 350000,
+        stats: {
+            appearances: 10,
+            goals: 4,
+            assists: 3,
+            clean_sheets: 0,
+            yellow_cards: 1,
+            red_cards: 0,
+            avg_rating: 7.2,
+            minutes_played: 450,
+            shots: 20,
+            shots_on_target: 10,
+            passes_completed: 80,
+            passes_attempted: 100,
+            tackles_won: 9,
+            interceptions: 6,
+            fouls_committed: 5,
+        },
+        career: [],
+        transfer_listed: false,
+        loan_listed: false,
+        transfer_offers: [],
+        traits: [],
+        ...overrides,
+    };
+}
+
 describe("PlayerProfile.helpers", function (): void {
     it("resolves the player team name with free-agent and unknown fallbacks", function (): void {
         const teams = [createTeam()];
@@ -47,21 +112,21 @@ describe("PlayerProfile.helpers", function (): void {
         expect(
             getPlayerTeamName(teams, "team-1", {
                 freeAgent: "Free Agent",
-                unknown: "MID",
+                unknown: "Unknown",
             }),
         ).toBe("Alpha FC");
         expect(
             getPlayerTeamName(teams, null, {
                 freeAgent: "Free Agent",
-                unknown: "MID",
+                unknown: "Unknown",
             }),
         ).toBe("Free Agent");
         expect(
             getPlayerTeamName(teams, "team-2", {
                 freeAgent: "Free Agent",
-                unknown: "MID",
+                unknown: "Unknown",
             }),
-        ).toBe("MID");
+        ).toBe("Unknown");
     });
 
     it("calculates age relative to an as-of date instead of just the birth year", function (): void {

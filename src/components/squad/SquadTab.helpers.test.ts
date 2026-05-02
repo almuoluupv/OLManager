@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerData } from "../../store/gameStore";
-import type { LolRole } from "./SquadTab.helpers";
 import {
   applyLineupDrop,
   applyLineupSwap,
@@ -19,7 +18,7 @@ import {
 
 const makePlayer = (
   id: string,
-  position: LolRole,
+  position: string,
   overrides: Partial<PlayerData> = {},
 ): PlayerData => ({
   id,
@@ -92,18 +91,18 @@ describe("SquadTab helpers", () => {
 
   it("builds a full eleven-player starting XI when enough players exist", () => {
     const available = [
-      makePlayer("gk", "SUPPORT"),
-      makePlayer("d1", "TOP"),
-      makePlayer("d2", "TOP"),
-      makePlayer("d3", "TOP"),
-      makePlayer("d4", "TOP"),
-      makePlayer("m1", "MID"),
-      makePlayer("m2", "MID"),
-      makePlayer("m3", "MID"),
-      makePlayer("m4", "MID"),
-      makePlayer("f1", "ADC"),
-      makePlayer("f2", "ADC"),
-      makePlayer("bench", "ADC"),
+      makePlayer("gk", "Goalkeeper"),
+      makePlayer("d1", "Defender"),
+      makePlayer("d2", "Defender"),
+      makePlayer("d3", "Defender"),
+      makePlayer("d4", "Defender"),
+      makePlayer("m1", "Midfielder"),
+      makePlayer("m2", "Midfielder"),
+      makePlayer("m3", "Midfielder"),
+      makePlayer("m4", "Midfielder"),
+      makePlayer("f1", "Forward"),
+      makePlayer("f2", "Forward"),
+      makePlayer("bench", "Forward"),
     ];
 
     const ids = buildStartingXIIds(
@@ -117,9 +116,9 @@ describe("SquadTab helpers", () => {
   });
 
   it("builds preferred positions using normalised natural and alternate roles", () => {
-    const player = makePlayer("p1", "TOP", {
-      natural_position: "TOP",
-      alternate_positions: ["TOP", "SUPPORT"],
+    const player = makePlayer("p1", "Center Back", {
+      natural_position: "Center Back",
+      alternate_positions: ["Right Wing Back", "Defensive Midfielder"],
     });
 
     expect(getPreferredPositions(player)).toEqual([
@@ -130,12 +129,12 @@ describe("SquadTab helpers", () => {
   });
 
   it("detects out-of-position status using normalised roles", () => {
-    const defender = makePlayer("p1", "TOP", {
-      natural_position: "TOP",
-      alternate_positions: ["TOP"],
+    const defender = makePlayer("p1", "Center Back", {
+      natural_position: "Center Back",
+      alternate_positions: ["Right Wing Back"],
     });
 
-    expect(isPlayerOutOfPosition(defender, "TOP")).toBe(false);
+    expect(isPlayerOutOfPosition(defender, "Defender")).toBe(false);
     expect(isPlayerOutOfPosition(defender, "Midfielder")).toBe(true);
   });
 
@@ -191,18 +190,18 @@ describe("SquadTab helpers", () => {
 
   it("prefers persisted starting XI ids when enough valid players remain", () => {
     const available = [
-      makePlayer("gk", "SUPPORT"),
-      makePlayer("d1", "TOP"),
-      makePlayer("d2", "TOP"),
-      makePlayer("d3", "TOP"),
-      makePlayer("d4", "TOP"),
-      makePlayer("m1", "MID"),
-      makePlayer("m2", "MID"),
-      makePlayer("m3", "MID"),
-      makePlayer("m4", "MID"),
-      makePlayer("f1", "ADC"),
-      makePlayer("f2", "ADC"),
-      makePlayer("b1", "ADC"),
+      makePlayer("gk", "Goalkeeper"),
+      makePlayer("d1", "Defender"),
+      makePlayer("d2", "Defender"),
+      makePlayer("d3", "Defender"),
+      makePlayer("d4", "Defender"),
+      makePlayer("m1", "Midfielder"),
+      makePlayer("m2", "Midfielder"),
+      makePlayer("m3", "Midfielder"),
+      makePlayer("m4", "Midfielder"),
+      makePlayer("f1", "Forward"),
+      makePlayer("f2", "Forward"),
+      makePlayer("b1", "Forward"),
     ];
 
     const ids = buildStartingXIIds(
@@ -216,17 +215,17 @@ describe("SquadTab helpers", () => {
 
   it("auto-selects players by formation role when persisted ids are missing", () => {
     const available = [
-      makePlayer("gk", "SUPPORT"),
-      makePlayer("d1", "TOP"),
-      makePlayer("d2", "TOP"),
-      makePlayer("d3", "TOP"),
-      makePlayer("d4", "TOP"),
-      makePlayer("m1", "MID"),
-      makePlayer("m2", "MID"),
-      makePlayer("m3", "MID"),
-      makePlayer("m4", "MID"),
-      makePlayer("f1", "ADC"),
-      makePlayer("f2", "ADC"),
+      makePlayer("gk", "Goalkeeper"),
+      makePlayer("d1", "Defender"),
+      makePlayer("d2", "Defender"),
+      makePlayer("d3", "Defender"),
+      makePlayer("d4", "Defender"),
+      makePlayer("m1", "Midfielder"),
+      makePlayer("m2", "Midfielder"),
+      makePlayer("m3", "Midfielder"),
+      makePlayer("m4", "Midfielder"),
+      makePlayer("f1", "Forward"),
+      makePlayer("f2", "Forward"),
     ];
 
     const ids = buildStartingXIIds(available, [], "4-4-2");
@@ -238,17 +237,17 @@ describe("SquadTab helpers", () => {
 
   it("builds pitch slot rows and active position map from xi ids", () => {
     const players = [
-      makePlayer("gk", "SUPPORT"),
-      makePlayer("d1", "TOP"),
-      makePlayer("d2", "TOP"),
-      makePlayer("d3", "TOP"),
-      makePlayer("d4", "TOP"),
-      makePlayer("m1", "MID"),
-      makePlayer("m2", "MID"),
-      makePlayer("m3", "MID"),
-      makePlayer("m4", "MID"),
-      makePlayer("f1", "ADC"),
-      makePlayer("f2", "ADC"),
+      makePlayer("gk", "Goalkeeper"),
+      makePlayer("d1", "LeftBack"),
+      makePlayer("d2", "CenterBack"),
+      makePlayer("d3", "CenterBack"),
+      makePlayer("d4", "RightBack"),
+      makePlayer("m1", "LeftMidfielder"),
+      makePlayer("m2", "CentralMidfielder"),
+      makePlayer("m3", "CentralMidfielder"),
+      makePlayer("m4", "RightMidfielder"),
+      makePlayer("f1", "Striker"),
+      makePlayer("f2", "Striker"),
     ];
     const xiIds = players.map((player) => player.id);
     const rows = buildPitchRows("4-4-2");
@@ -263,33 +262,33 @@ describe("SquadTab helpers", () => {
 
   it("preserves saved xi order for side-specific wide roles", () => {
     const available = [
-      makePlayer("gk", "SUPPORT"),
-      makePlayer("rb", "TOP", {
-        natural_position: "TOP",
+      makePlayer("gk", "Goalkeeper"),
+      makePlayer("rb", "RightBack", {
+        natural_position: "RightBack",
         footedness: "Right",
         weak_foot: 1,
       }),
-      makePlayer("cb1", "TOP"),
-      makePlayer("cb2", "TOP"),
-      makePlayer("lb", "TOP", {
-        natural_position: "TOP",
+      makePlayer("cb1", "CenterBack"),
+      makePlayer("cb2", "CenterBack"),
+      makePlayer("lb", "LeftBack", {
+        natural_position: "LeftBack",
         footedness: "Left",
         weak_foot: 1,
       }),
-      makePlayer("rm", "MID", {
-        natural_position: "MID",
+      makePlayer("rm", "RightMidfielder", {
+        natural_position: "RightMidfielder",
         footedness: "Right",
         weak_foot: 1,
       }),
-      makePlayer("cm1", "MID"),
-      makePlayer("cm2", "MID"),
-      makePlayer("lm", "MID", {
-        natural_position: "MID",
+      makePlayer("cm1", "CentralMidfielder"),
+      makePlayer("cm2", "CentralMidfielder"),
+      makePlayer("lm", "LeftMidfielder", {
+        natural_position: "LeftMidfielder",
         footedness: "Left",
         weak_foot: 1,
       }),
-      makePlayer("st1", "ADC"),
-      makePlayer("st2", "ADC"),
+      makePlayer("st1", "Striker"),
+      makePlayer("st2", "Striker"),
     ];
 
     const ids = buildStartingXIIds(

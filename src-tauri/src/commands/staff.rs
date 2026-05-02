@@ -6,9 +6,7 @@ use ofm_core::state::StateManager;
 
 #[tauri::command]
 pub fn hire_staff(state: State<'_, StateManager>, staff_id: String) -> Result<Game, String> {
-    crate::error_reporter::track("hire_staff", (|| {
-        hire_staff_internal(&state, &staff_id)
-    })())
+    hire_staff_internal(&state, &staff_id)
 }
 
 fn hire_staff_internal(state: &StateManager, staff_id: &str) -> Result<Game, String> {
@@ -196,9 +194,7 @@ mod tests {
 
 #[tauri::command]
 pub fn release_staff(state: State<'_, StateManager>, staff_id: String) -> Result<Game, String> {
-    crate::error_reporter::track("release_staff", (|| {
-        release_staff_internal(&state, &staff_id)
-    })())
+    release_staff_internal(&state, &staff_id)
 }
 
 fn release_staff_internal(state: &StateManager, staff_id: &str) -> Result<Game, String> {

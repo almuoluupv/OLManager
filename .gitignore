@@ -68,4 +68,3 @@ Thumbs.db
 # Tauri mobile generated files (optional, Tauri v2)
 # =========================
 src-tauri/gen/
-src-tauri/src/webhook_url.rs

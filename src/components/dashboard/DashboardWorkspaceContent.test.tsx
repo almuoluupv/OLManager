@@ -127,8 +127,8 @@ function createGameState(): GameStateData {
         full_name: "John Smith",
         date_of_birth: "2000-01-01",
         nationality: "GB",
-        position: "ADC",
-        natural_position: "ADC",
+        position: "Forward",
+        natural_position: "Forward",
         alternate_positions: [],
         training_focus: null,
         attributes: {

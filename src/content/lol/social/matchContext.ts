@@ -174,7 +174,7 @@ export function extractMatchContext(params: ExtractMatchContextParams): MatchCon
   const { match, userSide } = params;
   const enemySide = otherSide(userSide);
   const result: Result = winnerSide(match) === userSide ? "win" : "loss";
-  const durationMinutes = "durationMinutes" in match ? (match.durationMinutes ?? 0) : (match.duration_minutes ?? 0);
+  const durationMinutes = "durationMinutes" in match ? match.durationMinutes : match.duration_minutes ?? 0;
   const userKills = numberField(match, `${userSide}Kills` as keyof CompatibleMatchSummary, `${userSide}_kills` as keyof CompatibleMatchSummary);
   const enemyKills = numberField(match, `${enemySide}Kills` as keyof CompatibleMatchSummary, `${enemySide}_kills` as keyof CompatibleMatchSummary);
   const killDiff = userKills - enemyKills;

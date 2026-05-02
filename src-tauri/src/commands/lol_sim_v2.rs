@@ -12,9 +12,7 @@ pub fn lol_sim_v2_init(
     state: State<'_, LolSimV2StoreState>,
     request: crate::application::lol_sim_v2::LolSimV2InitRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_init", (|| {
-        init(&state, request)
-    })())
+    init(&state, request)
 }
 
 #[tauri::command]
@@ -22,9 +20,7 @@ pub fn lol_sim_v2_tick(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2TickRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_tick", (|| {
-        tick(&state, request)
-    })())
+    tick(&state, request)
 }
 
 #[tauri::command]
@@ -32,9 +28,7 @@ pub fn lol_sim_v2_reset(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2ResetRequest,
 ) -> Result<LolSimV2StateResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_reset", (|| {
-        reset(&state, request)
-    })())
+    reset(&state, request)
 }
 
 #[tauri::command]
@@ -42,9 +36,7 @@ pub fn lol_sim_v2_dispose(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2DisposeRequest,
 ) -> Result<LolSimV2DisposeResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_dispose", (|| {
-        dispose(&state, request)
-    })())
+    dispose(&state, request)
 }
 
 #[tauri::command]
@@ -52,9 +44,7 @@ pub async fn lol_sim_v2_run_to_completion(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2RunToCompletionRequest,
 ) -> Result<LolSimV2RunToCompletionResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_run_to_completion", (|| {
-        run_to_completion(&state, request)
-    })())
+    run_to_completion(&state, request)
 }
 
 #[tauri::command]
@@ -62,7 +52,5 @@ pub fn lol_sim_v2_skip_to_end(
     state: State<'_, LolSimV2StoreState>,
     request: LolSimV2SkipToEndRequest,
 ) -> Result<LolSimV2SkipToEndResponse, String> {
-    crate::error_reporter::track("lol_sim_v2_skip_to_end", (|| {
-        skip_to_end(&state, request)
-    })())
+    skip_to_end(&state, request)
 }

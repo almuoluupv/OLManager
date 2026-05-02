@@ -22,9 +22,7 @@ pub fn get_player_match_history(
     player_id: String,
     limit: Option<usize>,
 ) -> Result<Vec<PlayerMatchHistoryEntryDto>, String> {
-    crate::error_reporter::track("get_player_match_history", (|| {
-        get_player_match_history_internal(&state, &player_id, limit)
-    })())
+    get_player_match_history_internal(&state, &player_id, limit)
 }
 
 #[tauri::command]
@@ -32,9 +30,7 @@ pub fn get_player_stats_overview(
     state: State<'_, StateManager>,
     player_id: String,
 ) -> Result<PlayerStatsOverviewDto, String> {
-    crate::error_reporter::track("get_player_stats_overview", (|| {
-        get_player_stats_overview_internal(&state, &player_id)
-    })())
+    get_player_stats_overview_internal(&state, &player_id)
 }
 
 #[tauri::command]
@@ -42,9 +38,7 @@ pub fn get_team_stats_overview(
     state: State<'_, StateManager>,
     team_id: String,
 ) -> Result<Option<TeamStatsOverviewDto>, String> {
-    crate::error_reporter::track("get_team_stats_overview", (|| {
-        get_team_stats_overview_internal(&state, &team_id)
-    })())
+    get_team_stats_overview_internal(&state, &team_id)
 }
 
 #[tauri::command]
@@ -53,7 +47,5 @@ pub fn get_team_match_history(
     team_id: String,
     limit: Option<usize>,
 ) -> Result<Vec<TeamMatchHistoryEntryDto>, String> {
-    crate::error_reporter::track("get_team_match_history", (|| {
-        get_team_match_history_internal(&state, &team_id, limit)
-    })())
+    get_team_match_history_internal(&state, &team_id, limit)
 }

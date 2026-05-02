@@ -37,7 +37,7 @@ export const ROLE_KEY_STATS: Record<LolRole, { label: string; key: string }[]> =
 };
 
 export function getPlayerLolRole(player: EnginePlayerData): LolRole {
-  const explicitRole = String(player.lol_role || player.role || "")
+  const explicitRole = String(player.lol_role || "")
     .toUpperCase()
     .replace(/[^A-Z]/g, "");
 
@@ -47,7 +47,7 @@ export function getPlayerLolRole(player: EnginePlayerData): LolRole {
   if (explicitRole === "ADC") return "ADC";
   if (explicitRole === "SUPPORT" || explicitRole === "SUP") return "SUPPORT";
 
-  const key = String(player.position || player.role || "")
+  const key = String(player.position || "")
     .toLowerCase()
     .replace(/[^a-z]/g, "");
 
@@ -70,10 +70,7 @@ export function getPlayerLolRole(player: EnginePlayerData): LolRole {
   if (key === "defensivemidfielder" || key === "goalkeeper") {
     return "SUPPORT";
   }
-  if (key === "midfielder" || key === "centralmidfielder") {
-    return "JUNGLE";
-  }
-  return "MID";
+  return "JUNGLE";
 }
 
 export function getPositionOvr(p: EnginePlayerData): number {
@@ -355,6 +352,7 @@ export default function PreMatchLineup({
                 </span>
               </div>
               {userBench.map((bp) => {
+                const ovr = getPositionOvr(bp);
                 const role = getPlayerLolRole(bp);
                 const keyStats = ROLE_KEY_STATS[role] || [];
                 return (

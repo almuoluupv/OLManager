@@ -5,13 +5,11 @@ use tauri::State;
 
 #[tauri::command]
 pub fn get_available_jobs(state: State<'_, StateManager>) -> Result<Vec<JobOpportunity>, String> {
-    crate::error_reporter::track("get_available_jobs", (|| {
-        info!("[cmd] get_available_jobs");
-        let game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
-        Ok(job_offers::get_available_jobs(&game))
-    })())
+    info!("[cmd] get_available_jobs");
+    let game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
+    Ok(job_offers::get_available_jobs(&game))
 }
 
 #[tauri::command]
@@ -19,23 +17,21 @@ pub fn apply_for_job(
     state: State<'_, StateManager>,
     team_id: String,
 ) -> Result<serde_json::Value, String> {
-    crate::error_reporter::track("apply_for_job", (|| {
-        info!("[cmd] apply_for_job: team_id={}", team_id);
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
+    info!("[cmd] apply_for_job: team_id={}", team_id);
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
 
-        let result = job_offers::apply_for_job(&mut game, &team_id);
-        state.set_game(game.clone());
+    let result = job_offers::apply_for_job(&mut game, &team_id);
+    state.set_game(game.clone());
 
-        Ok(serde_json::json!({
-            "result": match result {
-                JobApplicationResult::Hired => "hired",
-                JobApplicationResult::Rejected => "rejected",
-                JobApplicationResult::InvalidTeam => "invalid_team",
-                JobApplicationResult::AlreadyEmployed => "already_employed",
-            },
-            "game": game,
-        }))
-    })())
+    Ok(serde_json::json!({
+        "result": match result {
+            JobApplicationResult::Hired => "hired",
+            JobApplicationResult::Rejected => "rejected",
+            JobApplicationResult::InvalidTeam => "invalid_team",
+            JobApplicationResult::AlreadyEmployed => "already_employed",
+        },
+        "game": game,
+    }))
 }

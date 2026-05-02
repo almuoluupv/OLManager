@@ -90,7 +90,7 @@ function makeSnapshot() {
         {
           id: "p1",
           name: "Alice",
-          position: "ADC",
+          position: "Forward",
           condition: 90,
           pace: 70,
           stamina: 70,
@@ -124,7 +124,7 @@ function makeSnapshot() {
         {
           id: "p2",
           name: "Bob",
-          position: "ADC",
+          position: "Forward",
           condition: 90,
           pace: 70,
           stamina: 70,
@@ -277,8 +277,8 @@ function makeGameState() {
         full_name: "Alice Forward",
         date_of_birth: "2000-01-01",
         nationality: "GB",
-        position: "ADC",
-        natural_position: "ADC",
+        position: "Forward",
+        natural_position: "Forward",
         alternate_positions: [],
         training_focus: null,
         attributes: {
@@ -337,8 +337,8 @@ function makeGameState() {
         full_name: "Bob Forward",
         date_of_birth: "2000-01-01",
         nationality: "GB",
-        position: "ADC",
-        natural_position: "ADC",
+        position: "Forward",
+        natural_position: "Forward",
         alternate_positions: [],
         training_focus: null,
         attributes: {

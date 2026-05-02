@@ -28,9 +28,7 @@ pub fn toggle_transfer_list(
     state: State<'_, StateManager>,
     player_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("toggle_transfer_list", (|| {
-        toggle_transfer_list_internal(&state, &player_id)
-    })())
+    toggle_transfer_list_internal(&state, &player_id)
 }
 
 fn toggle_transfer_list_internal(state: &StateManager, player_id: &str) -> Result<Game, String> {
@@ -50,9 +48,7 @@ fn toggle_transfer_list_internal(state: &StateManager, player_id: &str) -> Resul
 
 #[tauri::command]
 pub fn toggle_loan_list(state: State<'_, StateManager>, player_id: String) -> Result<Game, String> {
-    crate::error_reporter::track("toggle_loan_list", (|| {
-        toggle_loan_list_internal(&state, &player_id)
-    })())
+    toggle_loan_list_internal(&state, &player_id)
 }
 
 fn toggle_loan_list_internal(state: &StateManager, player_id: &str) -> Result<Game, String> {
@@ -77,9 +73,7 @@ pub fn make_transfer_bid(
     fee: u64,
     destination: Option<TransferDestination>,
 ) -> Result<TransferNegotiationCommandResponse, String> {
-    crate::error_reporter::track("make_transfer_bid", (|| {
-        make_transfer_bid_internal(&state, &player_id, fee, destination.unwrap_or_default())
-    })())
+    make_transfer_bid_internal(&state, &player_id, fee, destination.unwrap_or_default())
 }
 
 #[tauri::command]
@@ -89,14 +83,12 @@ pub fn preview_transfer_bid_financial_impact(
     fee: u64,
     destination: Option<TransferDestination>,
 ) -> Result<TransferBidFinancialProjectionCommandResponse, String> {
-    crate::error_reporter::track("preview_transfer_bid_financial_impact", (|| {
-        preview_transfer_bid_financial_impact_internal(
-            &state,
-            &player_id,
-            fee,
-            destination.unwrap_or_default(),
-        )
-    })())
+    preview_transfer_bid_financial_impact_internal(
+        &state,
+        &player_id,
+        fee,
+        destination.unwrap_or_default(),
+    )
 }
 
 fn make_transfer_bid_internal(
@@ -151,9 +143,7 @@ pub fn respond_to_offer(
     offer_id: String,
     accept: bool,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("respond_to_offer", (|| {
-        respond_to_offer_internal(&state, &player_id, &offer_id, accept)
-    })())
+    respond_to_offer_internal(&state, &player_id, &offer_id, accept)
 }
 
 fn respond_to_offer_internal(
@@ -182,9 +172,7 @@ pub fn counter_offer(
     offer_id: String,
     requested_fee: u64,
 ) -> Result<TransferNegotiationCommandResponse, String> {
-    crate::error_reporter::track("counter_offer", (|| {
-        counter_offer_internal(&state, &player_id, &offer_id, requested_fee)
-    })())
+    counter_offer_internal(&state, &player_id, &offer_id, requested_fee)
 }
 
 fn counter_offer_internal(
@@ -226,19 +214,17 @@ pub fn send_scout(
     scout_id: String,
     player_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("send_scout", (|| {
-        info!(
-            "[cmd] send_scout: scout_id={}, player_id={}",
-            scout_id, player_id
-        );
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
+    info!(
+        "[cmd] send_scout: scout_id={}, player_id={}",
+        scout_id, player_id
+    );
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
 
-        ofm_core::scouting::send_scout(&mut game, &scout_id, &player_id)?;
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    ofm_core::scouting::send_scout(&mut game, &scout_id, &player_id)?;
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 #[tauri::command]
@@ -246,16 +232,14 @@ pub fn release_player_contract(
     state: State<'_, StateManager>,
     player_id: String,
 ) -> Result<Game, String> {
-    crate::error_reporter::track("release_player_contract", (|| {
-        info!("[cmd] release_player_contract: player_id={}", player_id);
-        let mut game = state
-            .get_game(|g| g.clone())
-            .ok_or("No active game session".to_string())?;
+    info!("[cmd] release_player_contract: player_id={}", player_id);
+    let mut game = state
+        .get_game(|g| g.clone())
+        .ok_or("No active game session".to_string())?;
 
-        ofm_core::transfers::release_player_contract(&mut game, &player_id)?;
-        state.set_game(game.clone());
-        Ok(game)
-    })())
+    ofm_core::transfers::release_player_contract(&mut game, &player_id)?;
+    state.set_game(game.clone());
+    Ok(game)
 }
 
 #[cfg(test)]

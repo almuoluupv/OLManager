@@ -15,7 +15,7 @@ function fullReport(overrides?: Partial<ScoutReportData>): ScoutReportData {
   return {
     player_id: "p1",
     player_name: "Carlos Silva",
-    position: "MID",
+    position: "Midfielder",
     nationality: "BR",
     dob: "1998-03-15",
     team_name: "Rival FC",

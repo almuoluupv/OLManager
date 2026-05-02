@@ -91,7 +91,7 @@ export default function ManagerTab({ gameState }: ManagerTabProps) {
       // Update local game state to reflect changes immediately
       const updatedManager = {
         ...mgr,
-        nickname: formData.nickname || undefined,
+        nickname: formData.nickname || null,
         first_name: formData.firstName,
         last_name: formData.lastName,
         date_of_birth: formData.dob,
