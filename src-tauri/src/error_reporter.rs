@@ -10,27 +10,6 @@ static ACTIVE_SAVE_ID: OnceLock<String> = OnceLock::new();
 pub fn init(webhook_url: String) {
     log::info!("[error_reporter] Initializing with webhook URL (length={})", webhook_url.len());
     let _ = WEBHOOK_URL.set(webhook_url);
-
-    let url = WEBHOOK_URL.get().unwrap().clone();
-    std::thread::spawn(move || {
-        let payload = serde_json::json!({
-            "embeds": [{
-                "title": "OLM Error Reporter Active",
-                "description": "Error reporting is now live. All panics and command errors will be sent here.",
-                "color": 0x00FF00,
-                "footer": { "text": "OLM" }
-            }]
-        });
-        let body = serde_json::to_string(&payload).unwrap_or_default();
-        match reqwest::blocking::Client::new()
-            .post(&url)
-            .header("Content-Type", "application/json")
-            .body(body)
-            .send() {
-                Ok(resp) => log::info!("[error_reporter] Test webhook sent: status={}", resp.status()),
-                Err(e) => log::error!("[error_reporter] Test webhook failed: {}", e),
-            }
-    });
 }
 
 pub fn set_saves_dir(path: String) {
