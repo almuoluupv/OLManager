@@ -41,7 +41,9 @@ interface Props {
 const SPEEDS = [
   { id: "x1", value: 4 },
   { id: "x2", value: 8 },
-  { id: "x4", value: 12 },
+  { id: "x4", value: 16 },
+  { id: "x8", value: 32 },
+  { id: "x12", value: 48 }
 ];
 
 const DDRAGON_VERSION = "14.24.1";
