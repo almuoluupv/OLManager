@@ -174,8 +174,8 @@
     "selectCountry": "Seleccionar País/Región...",
     "searchNationalities": "Buscar nacionalidades...",
     "chooseWorld": "Elegir Mundo",
-    "placeholderFirst": "ej. José",
-    "placeholderLast": "ej. Mourinho"
+    "placeholderFirst": "ej. Lee",
+    "placeholderLast": "ej. Sang-hyeok"
   },
   "validation": {
     "required": "{{field}} es obligatorio",

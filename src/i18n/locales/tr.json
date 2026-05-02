@@ -174,8 +174,8 @@
     "selectCountry": "Ülke/Bölge seçin...",
     "searchNationalities": "Uyrukları ara...",
     "chooseWorld": "Dünya Seç",
-    "placeholderFirst": "örn. José",
-    "placeholderLast": "örn. Mourinho"
+    "placeholderFirst": "örn. Lee",
+    "placeholderLast": "örn. Sang-hyeok"
   },
   "validation": {
     "required": "{{field}} alanı zorunludur",
