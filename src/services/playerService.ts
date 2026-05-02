@@ -18,3 +18,7 @@ export async function setPlayerChampionTrainingTarget(
     championId,
   });
 }
+
+export async function delegateChampionTraining(): Promise<GameStateData> {
+  return invoke<GameStateData>("delegate_champion_training");
+}

@@ -400,6 +400,25 @@ pub fn set_player_champion_training_target(
 }
 
 #[tauri::command]
+pub fn delegate_champion_training(
+    state: State<'_, StateManager>,
+) -> Result<Game, String>
+{
+    crate::error_reporter::track("delegate_champion_training", (|| {
+        info!("[cmd] delegate_champion_training");
+        let mut game = state
+            .get_game(|g| g.clone())
+            .ok_or("No active game session".to_string())?;
+
+        let updated = ofm_core::champions::delegate_champion_training_to_coach(&mut game)?;
+        info!("[cmd] delegate_champion_training: updated {} players", updated);
+
+        state.set_game(game.clone());
+        Ok(game)
+    })())
+}
+
+#[tauri::command]
 pub fn start_potential_research(
     state: State<'_, StateManager>,
     player_id: String,

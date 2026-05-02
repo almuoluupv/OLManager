@@ -121,6 +121,7 @@ pub fn run() {
             set_weekly_scrims,
             set_player_training_focus,
             set_player_champion_training_target,
+            delegate_champion_training,
             start_potential_research,
             reroll_player_lol_role,
             hire_staff,
