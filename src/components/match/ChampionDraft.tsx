@@ -1195,15 +1195,6 @@ export default function ChampionDraft({
         if (tier !== metaTierFilter) return false;
       }
 
-      if (
-        currentStep?.type === "pick" &&
-        currentStep.side !== controlledSide &&
-        knownRivalChampionIds.size > 0 &&
-        !knownRivalChampionIds.has(champion.id)
-      ) {
-        return false;
-      }
-
       return true;
     });
 
